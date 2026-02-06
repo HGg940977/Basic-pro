@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Advanced Word Counter - Basic Touch Pro</title>
+    <meta name="description" content="Count words, characters, sentences, and paragraphs in real-time. Estimate reading and speaking time instantly.">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg: var(--tg-theme-bg-color, #ffffff);
+            --text: var(--tg-theme-text-color, #000000);
+            --hint: var(--tg-theme-hint-color, #707579);
+            --btn: var(--tg-theme-button-color, #0088cc);
+            --btn-text: var(--tg-theme-button-text-color, #ffffff);
+            --secondary: var(--tg-theme-secondary-bg-color, #f4f4f5);
+            --border: var(--tg-theme-hint-color, #e0e0e0);
+            --card: var(--tg-theme-bg-color, #ffffff);
+        }
+
+        body {
+            font-family: -apple-system, sans-serif;
+            margin: 0; background-color: var(--secondary); color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* হেডার - Visually consistent with previous tools */
+        .header {
+            padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;
+            background: var(--bg); border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo img { width: 30px; height: 30px; }
+        .logo-text { font-weight: bold; font-size: 18px; color: var(--btn); }
+        .profile { width: 35px; height: 35px; border-radius: 50%; border: 1px solid var(--btn); object-fit: cover; }
+
+        .container { padding: 15px; max-width: 600px; margin: 0 auto; }
+
+        /* টেক্সট এরিয়া কার্ড */
+        .input-card {
+            background: var(--card); border-radius: 15px; padding: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%; height: 200px; border: none; outline: none;
+            background: transparent; color: var(--text); font-size: 16px;
+            line-height: 1.5; resize: none; box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .action-row {
+            display: flex; justify-content: flex-end; gap: 10px;
+            padding-top: 10px; border-top: 1px solid var(--secondary);
+        }
+
+        .icon-btn {
+            background: var(--secondary); border: none; color: var(--btn);
+            padding: 8px 15px; border-radius: 8px; cursor: pointer;
+            font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 5px;
+        }
+        .icon-btn:active { transform: scale(0.95); }
+        .icon-btn.clear { color: #ff3b30; }
+
+        /* স্ট্যাট গ্রিড */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+        }
+
+        .stat-card {
+            background: var(--card); border-radius: 12px; padding: 15px;
+            text-align: center; border: 1px solid var(--border);
+            transition: 0.3s;
+        }
+        .stat-card i { font-size: 20px; color: var(--btn); margin-bottom: 8px; }
+        .stat-val { font-size: 22px; font-weight: 800; display: block; margin-bottom: 2px; }
+        .stat-label { font-size: 11px; color: var(--hint); text-transform: uppercase; font-weight: 600; }
+
+        /* টাইম কার্ডস */
+        .time-row {
+            grid-column: span 2; display: flex; gap: 12px;
+        }
+        .time-card {
+            flex: 1; background: var(--btn); color: var(--btn-text);
+            padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 10px;
+        }
+        .time-card i { font-size: 18px; }
+        .time-info { font-size: 12px; line-height: 1.2; }
+        .time-info b { display: block; font-size: 15px; }
+
+        @media (min-width: 480px) {
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+            .time-row { grid-column: span 3; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="logo">
+        <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png" alt="Logo">
+        <div class="logo-text">Basic Touch Pro</div>
+    </div>
+    <img id="u-avatar" class="profile" src="https://ui-avatars.com/api/?name=User" alt="P">
+</div>
+
+<div class="container">
+    <h1 style="font-size: 20px; margin-bottom: 15px; text-align: center;">Word & Character Counter</h1>
+    
+    <!-- Input Section -->
+    <div class="input-card">
+        <textarea id="text-input" placeholder="Type or paste your text here..." oninput="updateStats()"></textarea>
+        <div class="action-row">
+            <button class="icon-btn clear" onclick="clearText()">
+                <i class="fas fa-trash"></i> Clear
+            </button>
+            <button class="icon-btn" onclick="copyText()">
+                <i class="fas fa-copy"></i> Copy
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <i class="fas fa-file-word"></i>
+            <span class="stat-val" id="word-count">0</span>
+            <span class="stat-label">Words</span>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-font"></i>
+            <span class="stat-val" id="char-count">0</span>
+            <span class="stat-label">Chars (All)</span>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-align-left"></i>
+            <span class="stat-val" id="char-no-space">0</span>
+            <span class="stat-label">No Space</span>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-quote-left"></i>
+            <span class="stat-val" id="sentence-count">0</span>
+            <span class="stat-label">Sentences</span>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-paragraph"></i>
+            <span class="stat-val" id="paragraph-count">0</span>
+            <span class="stat-label">Paragraphs</span>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-clock"></i>
+            <span class="stat-val" id="reading-time">0</span>
+            <span class="stat-label">Min Read</span>
+        </div>
+
+        <!-- Time Estimation -->
+        <div class="time-row">
+            <div class="time-card">
+                <i class="fas fa-book-open"></i>
+                <div class="time-info">
+                    Reading Duration
+                    <b id="read-time-long">0 min 0 sec</b>
+                </div>
+            </div>
+            <div class="time-card" style="background: #2eab5d;">
+                <i class="fas fa-microphone-alt"></i>
+                <div class="time-info">
+                    Speaking Duration
+                    <b id="speak-time-long">0 min 0 sec</b>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.BackButton.show();
+    tg.BackButton.onClick(() => window.location.href = "index.html");
+
+    const user = tg.initDataUnsafe.user || {};
+    if(user.username) document.getElementById('u-avatar').src = `https://t.me/i/userpic/160/${user.username}.jpg`;
+
+    const input = document.getElementById('text-input');
+
+    function updateStats() {
+        const text = input.value.trim();
+        
+        // Word Count
+        const words = text ? text.split(/\s+/).filter(word => word.length > 0).length : 0;
+        document.getElementById('word-count').innerText = words;
+
+        // Character Counts
+        document.getElementById('char-count').innerText = input.value.length;
+        document.getElementById('char-no-space').innerText = input.value.replace(/\s/g, '').length;
+
+        // Sentence Count
+        const sentences = text ? text.split(/[.!?]+/).filter(s => s.trim().length > 0).length : 0;
+        document.getElementById('sentence-count').innerText = sentences;
+
+        // Paragraph Count
+        const paragraphs = text ? text.split(/\n\s*\n/).filter(p => p.trim().length > 0).length : 0;
+        document.getElementById('paragraph-count').innerText = paragraphs;
+
+        // Reading Time (Average 200 wpm)
+        const readTime = words / 200;
+        document.getElementById('reading-time').innerText = Math.ceil(readTime);
+        document.getElementById('read-time-long').innerText = formatTime(readTime);
+
+        // Speaking Time (Average 130 wpm)
+        const speakTime = words / 130;
+        document.getElementById('speak-time-long').innerText = formatTime(speakTime);
+    }
+
+    function formatTime(minutes) {
+        const totalSeconds = Math.floor(minutes * 60);
+        const min = Math.floor(totalSeconds / 60);
+        const sec = totalSeconds % 60;
+        return `${min} min ${sec} sec`;
+    }
+
+    function clearText() {
+        if(input.value.length > 0) {
+            tg.showConfirm("Are you sure you want to clear the text?", (ok) => {
+                if(ok) {
+                    input.value = '';
+                    updateStats();
+                }
+            });
+        }
+    }
+
+    function copyText() {
+        if(input.value.length > 0) {
+            input.select();
+            document.execCommand('copy');
+            tg.showAlert("Text copied to clipboard! ✅");
+        } else {
+            tg.showAlert("Nothing to copy!");
+        }
+    }
+
+    // Auto-focus on load
+    window.onload = () => {
+        input.focus();
+    };
+</script>
+
+
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const AdController = window.Adsgram.init({ blockId: "int-19383" });
+
+        AdController.show().then((result) => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                
+                setTimeout(() => {
+                    window.Telegram.WebApp.showAlert('Thanks for support 💝');
+                }, 200);
+            }
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+</script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

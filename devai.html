@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Architect - @BasicTouchPro</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --tg-bg: #ffffff; --tg-text: #000000; --tg-sec: #707579;
+            --tg-border: #e0e0e0; --tg-blue: #0088cc; --tg-card: #f8f9fa;
+        }
+        [data-theme="dark"] {
+            --tg-bg: #17212b; --tg-text: #e1e3e6; --tg-sec: #a8b2bb;
+            --tg-border: #2c3a48; --tg-card: #232f3d;
+        }
+        body { font-family: -apple-system, sans-serif; background: var(--tg-bg); color: var(--tg-text); margin: 0; padding: 0; overflow-x: hidden; }
+        
+        .header {
+            padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--tg-border); background: var(--tg-bg); position: sticky; top:0; z-index:100;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo img { width: 32px; height: 32px; border-radius: 5px; }
+        .logo-text { font-weight: bold; font-size: 18px; color: var(--tg-blue); }
+        .profile { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--tg-blue); cursor: pointer; object-fit: cover; }
+
+        .container { max-width: 550px; margin: 0 auto; padding: 20px; }
+        .intro-card { background: var(--tg-blue); color: #fff; padding: 15px; border-radius: 12px; font-size: 13px; line-height: 1.5; margin-bottom: 20px; }
+
+        .card { background: var(--tg-card); border-radius: 15px; padding: 20px; border: 1px solid var(--tg-border); margin-bottom: 15px; position: relative; }
+        label { font-size: 12px; color: var(--tg-sec); font-weight: bold; display: block; margin-bottom: 8px; }
+        
+        input, textarea, select { 
+            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--tg-border); 
+            background: var(--tg-bg); color: var(--tg-text); outline: none; transition: 0.3s; box-sizing: border-box;
+        }
+        input:focus, textarea:focus { border-color: var(--tg-blue); box-shadow: 0 0 10px rgba(0, 136, 204, 0.2); }
+
+        .mode-row { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-mode { flex: 1; padding: 12px; border: 2px solid var(--tg-blue); background: transparent; color: var(--tg-blue); border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-mode.active { background: var(--tg-blue); color: #fff; }
+
+        .btn-main { background: var(--tg-blue); color: #fff; border: none; padding: 14px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; }
+
+        /* Planning Editor */
+        #planning-editor { min-height: 150px; font-size: 14px; line-height: 1.6; display: none; background: #fff; color: #000; padding: 12px; border-radius: 10px; border: 1px solid var(--tg-border); margin-top: 10px; }
+
+        /* Advanced Magic Animation */
+        .anim-box { display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0; }
+        .magic-orb { 
+            width: 60px; height: 60px; background: radial-gradient(circle, #0088cc, #00ffcc); 
+            border-radius: 50%; box-shadow: 0 0 20px #0088cc; animation: pulse 1.5s infinite; 
+        }
+        @keyframes pulse { 0% { transform: scale(0.9); opacity: 0.7; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(0.9); opacity: 0.7; } }
+        .ticker { margin-top: 20px; font-size: 13px; font-weight: bold; color: var(--tg-sec); letter-spacing: 0.5px; }
+
+        #result-area { display: none; }
+        iframe { width: 100%; height: 500px; border: 1px solid var(--tg-border); border-radius: 12px; margin-top: 15px; background: white; }
+
+        .refine-chat { display: flex; gap: 10px; margin-top: 15px; background: var(--tg-card); padding: 10px; border-radius: 15px; border: 1px solid var(--tg-border); }
+        .refine-chat input { border: none; background: transparent; }
+        .btn-refine { background: var(--tg-blue); color: #fff; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
+        .modal-content { background: var(--tg-bg); padding: 25px; border-radius: 15px; width: 100%; max-width: 400px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+      <div class="logo">
+        <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png">
+        <div class="logo-text">Basic Touch Pro</div>
+      </div>
+      <div style="display: flex; gap: 15px; align-items: center;">
+        <i class="fas fa-microchip" style="color:var(--tg-sec); cursor:pointer; font-size:20px;" onclick="openSettings()"></i>
+        <img id="profile-pic" class="profile" src="" onclick="window.location.href='tg.html'">
+      </div>
+    </div>
+
+    <div class="container">
+        <div class="intro-card" id="intro-card">
+            <i class="fas fa-robot"></i> <b>AI Architect v3.0</b><br>
+            • Pro Architecture Mode for Custom Edits.<br>
+            • Next-Gen 3D & Futuristic UI Logic.<br>
+            • Dynamic ZIP Delivery to Telegram.
+        </div>
+
+        <div id="step-1">
+            <div class="card">
+                <label><i class="fas fa-folder-open"></i> Project Identity</label>
+                <input type="text" id="projName" placeholder="Project Name">
+                <label style="margin-top:15px;"><i class="fas fa-brain"></i> Website Vision</label>
+                <textarea id="projDesc" rows="4" placeholder="Describe your dream website..."></textarea>
+                
+                <div class="mode-row">
+                    <button class="btn-mode active" id="modeQuick" onclick="setMode('quick')"><i class="fas fa-bolt"></i> Quick</button>
+                    <button class="btn-mode" id="modeArchitect" onclick="setMode('architect')"><i class="fas fa-project-diagram"></i> Architect</button>
+                </div>
+                <button class="btn-main" id="startBtn" style="margin-top:20px;"><i class="fas fa-wand-magic-sparkles"></i> INITIALIZE ENGINE</button>
+            </div>
+        </div>
+
+        <div id="step-2" style="display:none;">
+            <div class="card">
+                <label><i class="fas fa-pen-nib"></i> AI Technical Plan (Editable)</label>
+                <textarea id="planning-editor"></textarea>
+                
+                <div id="loading-box" class="anim-box">
+                    <div class="magic-orb"></div>
+                    <div class="ticker" id="ticker-text">Synthesizing Code Layers...</div>
+                </div>
+
+                <button class="btn-main" id="confirmBuildBtn" style="display:none; background:#28a745; margin-top:20px;"><i class="fas fa-rocket"></i> CONFIRM & DEPLOY</button>
+            </div>
+        </div>
+
+        <div id="result-area">
+            <div style="display:flex; gap:10px;">
+                <button class="btn-main" onclick="copyCode()" style="background:#444; margin-top:0;"><i class="fas fa-copy"></i> COPY</button>
+                <button class="btn-main" id="sendZipBtn" style="background:#28a745; margin-top:0;"><i class="fab fa-telegram-plane"></i> GET ZIP</button>
+            </div>
+            <iframe id="preview-frame"></iframe>
+            
+            <div id="refine-section">
+                <div class="refine-chat">
+                    <input type="text" id="refineInput" placeholder="Describe changes...">
+                    <button class="btn-refine" id="refineBtn">UPDATE</button>
+                </div>
+            </div>
+            <div id="refine-loading" class="anim-box" style="background: var(--tg-card); border-radius: 15px; margin-top: 15px;">
+                <div class="magic-orb"></div>
+                <div class="ticker">Re-Architecting UI...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="setModal">
+        <div class="modal-content">
+            <h4><i class="fas fa-key"></i> Key Configuration</h4>
+            <label>OpenRouter API Key</label>
+            <input type="password" id="apiKey" placeholder="sk-or-v1-...">
+            <a href="https://openrouter.ai/" target="_blank" style="color:var(--tg-blue); font-size:11px; font-weight:bold; text-decoration:none;">Get Key <i class="fas fa-external-link-alt"></i></a>
+            <select id="modelSelect" style="margin-top:15px;">
+                <option value="tngtech/deepseek-r1t-chimera:free">DeepSeek R1T Chimera</option>
+                <option value="openai/gpt-oss-20b:free">GPT-OSS 20B</option>
+                <option value="qwen/qwen3-coder:free">Qwen 3 Coder 480B</option>
+                <option value="z-ai/glm-4.5-air:free">GLM 4.5 Air</option>
+                <option value="stepfun/step-3.5-flash:free">StepFun 3.5 Flash</option>
+            </select>
+            <button class="btn-main" onclick="saveSettings()">SAVE CONFIG</button>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => window.location.href = "index.html");
+
+        document.documentElement.setAttribute('data-theme', tg.colorScheme);
+        const user = tg.initDataUnsafe.user || {};
+        document.getElementById('profile-pic').src = user.username ? `https://t.me/i/userpic/160/${user.username}.jpg` : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+
+        let finalCode = "";
+        let selectedMode = 'quick';
+        const tickers = ["Inverting Logic Gates...", "Injecting Tailwind Flow...", "Rendering 3D Assets...", "Optimizing UI Tree..."];
+
+        window.onload = () => {
+            document.getElementById('apiKey').value = localStorage.getItem('bt_nextgen_key') || '';
+            document.getElementById('modelSelect').value = localStorage.getItem('bt_nextgen_model') || 'tngtech/deepseek-r1t-chimera:free';
+        };
+
+        function setMode(mode) {
+            selectedMode = mode;
+            document.getElementById('modeQuick').classList.toggle('active', mode === 'quick');
+            document.getElementById('modeArchitect').classList.toggle('active', mode === 'architect');
+        }
+
+        function openSettings() { document.getElementById('setModal').style.display = 'flex'; }
+        function saveSettings() {
+            localStorage.setItem('bt_nextgen_key', document.getElementById('apiKey').value);
+            localStorage.setItem('bt_nextgen_model', document.getElementById('modelSelect').value);
+            document.getElementById('setModal').style.display = 'none';
+        }
+
+        function cleanCode(raw) {
+            let cl = raw.replace(/```html|```/g, "").trim();
+            const s = cl.indexOf('<!DOCTYPE');
+            if(s !== -1) cl = cl.substring(s);
+            const e = cl.lastIndexOf('</html>');
+            if(e !== -1) cl = cl.substring(0, e + 7);
+            return cl;
+        }
+
+        async function aiRequest(messages) {
+            const fd = new FormData();
+            fd.append('action', 'ai_call');
+            fd.append('api_key', localStorage.getItem('bt_nextgen_key'));
+            fd.append('model', localStorage.getItem('bt_nextgen_model'));
+            fd.append('messages', JSON.stringify(messages));
+            const res = await fetch(window.location.href, { method: 'POST', body: fd });
+            return await res.json();
+        }
+
+        document.getElementById('startBtn').onclick = async () => {
+            const desc = document.getElementById('projDesc').value;
+            if(!desc) return;
+            if(!localStorage.getItem('bt_nextgen_key')) { openSettings(); return; }
+
+            document.getElementById('intro-card').style.display = 'none';
+            document.getElementById('step-1').style.display = 'none';
+            document.getElementById('step-2').style.display = 'block';
+
+            if(selectedMode === 'architect') {
+                const res = await aiRequest([{ role: "system", content: "Architecture Plan: Summarize technical blueprint in 4 bullets. No extra talk." }, { role: "user", content: desc }]);
+                typeWriter(res.choices[0].message.content);
+            } else {
+                generateCode(desc);
+            }
+        };
+
+        function typeWriter(text) {
+            let i = 0;
+            const el = document.getElementById('planning-editor');
+            el.style.display = 'block';
+            el.value = "";
+            const iv = setInterval(() => {
+                el.value += text[i];
+                el.scrollTop = el.scrollHeight;
+                i++;
+                if(i >= text.length) { clearInterval(iv); document.getElementById('confirmBuildBtn').style.display = 'block'; }
+            }, 10);
+        }
+
+        async function generateCode(prompt) {
+            document.getElementById('planning-editor').style.display = 'none';
+            document.getElementById('confirmBuildBtn').style.display = 'none';
+            const loading = document.getElementById('loading-box');
+            loading.style.display = 'flex';
+
+            let t = 0;
+            const ti = setInterval(() => { document.getElementById('ticker-text').innerText = tickers[t % tickers.length]; t++; }, 2500);
+
+            try {
+                const res = await aiRequest([
+                    { role: "system", content: "You are a Next-Gen Web Designer. Build using Tailwind CSS, incorporate 3D-like animations, modern typography, futuristic glassmorphism UI, and smooth JS effects. Output ONLY raw HTML code. NO talk." },
+                    { role: "user", content: `Build this professional website: ${prompt}` }
+                ]);
+                finalCode = cleanCode(res.choices[0].message.content);
+                clearInterval(ti);
+                document.getElementById('step-2').style.display = 'none';
+                document.getElementById('result-area').style.display = 'block';
+                document.getElementById('preview-frame').srcdoc = finalCode;
+                if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            } catch (e) { openSettings(); }
+        }
+
+        document.getElementById('confirmBuildBtn').onclick = () => generateCode(document.getElementById('planning-editor').value);
+
+        // Refine with Hiding Logic
+        document.getElementById('refineBtn').onclick = async () => {
+            const req = document.getElementById('refineInput').value;
+            if(!req) return;
+
+            document.getElementById('refine-section').style.display = 'none';
+            document.getElementById('refine-loading').style.display = 'flex';
+
+            try {
+                const res = await aiRequest([
+                    { role: "system", content: "Update existing HTML. Keep Next-Gen UI/Animations. Output ONLY raw updated HTML." },
+                    { role: "user", content: `Code: ${finalCode} \n\n NEW REQUEST: ${req}` }
+                ]);
+                finalCode = cleanCode(res.choices[0].message.content);
+                document.getElementById('preview-frame').srcdoc = finalCode;
+                document.getElementById('refineInput').value = "";
+                tg.showAlert("Re-Architected Successfully! ✅");
+            } catch (e) { tg.showAlert("Update Error"); }
+            finally {
+                document.getElementById('refine-section').style.display = 'block';
+                document.getElementById('refine-loading').style.display = 'none';
+            }
+        };
+
+        document.getElementById('sendZipBtn').onclick = async () => {
+            const btn = document.getElementById('sendZipBtn');
+            btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> PROCESSING...";
+            btn.disabled = true;
+
+            const fd = new FormData();
+            fd.append('action', 'send_zip');
+            fd.append('chat_id', user.id || '');
+            fd.append('code', finalCode);
+            fd.append('project_name', document.getElementById('projName').value || 'AI_Project');
+
+            const res = await fetch(window.location.href, { method: 'POST', body: fd });
+            const data = await res.json();
+            if(data.ok) {
+                tg.showAlert("ZIP File sent to your Telegram! ✅");
+                btn.innerHTML = "SENT ✅";
+            } else {
+                tg.showAlert("ZIP failed.");
+                btn.disabled = false;
+                btn.innerHTML = "GET ZIP";
+            }
+        };
+
+        function copyCode() {
+            navigator.clipboard.writeText(finalCode);
+            tg.showAlert("Code Copied!");
+        }
+    </script>
+    
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const AdController = window.Adsgram.init({ blockId: "int-19383" });
+
+        AdController.show().then((result) => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                
+                setTimeout(() => {
+                    window.Telegram.WebApp.showAlert('Thanks for support 💝');
+                }, 200);
+            }
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to File Converter</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+   
+    <style>
+        :root {
+          --telegram-bg: #ffffff;
+          --telegram-text: #000000;
+          --telegram-secondary: #707579;
+          --telegram-card: #ffffff;
+          --telegram-border: #e0e0e0;
+          --telegram-blue: #0088cc;
+          --telegram-green: #2eab5d;
+          --telegram-red: #ff3b30;
+          --telegram-purple: #9b59b6;
+          --telegram-orange: #ff9500;
+          --telegram-light: #ebedf0;
+        }
+
+        [data-theme="dark"] {
+          --telegram-bg: #17212b;
+          --telegram-text: #e1e3e6;
+          --telegram-secondary: #a8b2bb;
+          --telegram-card: #232f3d;
+          --telegram-border: #2c3a48;
+          --telegram-light: #2b5278;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--telegram-bg);
+            color: var(--telegram-text);
+            transition: all 0.3s ease;
+        }
+
+        /* Header Styles */
+        .header {
+          padding: 15px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid var(--telegram-border);
+          background-color: var(--telegram-card);
+        }
+
+        .logo {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .logo img {
+          width: 30px;
+          height: 30px;
+        }
+
+        .logo-text {
+          font-weight: bold;
+          font-size: 18px;
+          color: var(--telegram-blue);
+        }
+
+        .profile {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          object-fit: cover;
+          cursor: pointer;
+          transition: transform 0.3s ease;
+        }
+
+        .profile:hover {
+          transform: scale(1.1);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--telegram-border);
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: var(--telegram-card);
+            color: var(--telegram-text);
+            box-sizing: border-box;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--telegram-blue);
+        }
+
+        .select-field {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--telegram-border);
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: var(--telegram-card);
+            color: var(--telegram-text);
+            cursor: pointer;
+        }
+           .select-field:focus {
+            outline: none;
+            border-color: var(--telegram-blue);
+        }
+
+        .textarea-field {
+            width: 93%;
+            height: 200px;
+            padding: 12px;
+            border: 1px solid var(--telegram-border);
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: var(--telegram-card);
+            color: var(--telegram-text);
+            resize: vertical;
+            font-family: monospace;
+        }
+         .textarea-field:focus {
+            outline: none;
+            border-color: var(--telegram-blue);
+        }
+
+        .convert-btn {
+            background-color: var(--telegram-blue);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        .convert-btn:hover {
+            background-color: #0073aa;
+        }
+
+        .convert-btn:disabled {
+            background-color: var(--telegram-secondary);
+            cursor: not-allowed;
+        }
+
+        .processing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .spinner {
+            font-size: 40px;
+            color: var(--telegram-blue);
+            margin-bottom: 15px;
+            animation: spin 1s linear infinite;
+        }
+
+        .success-icon {
+            font-size: 60px;
+            color: var(--telegram-green);
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .processing-text {
+            color: white;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            color: var(--telegram-red);
+            text-align: center;
+            margin: 10px 0;
+            display: none;
+        }
+
+        .filename-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filename-input {
+            flex: 1;
+        }
+
+        .extension-display {
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+            color: var(--telegram-text);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+      <div class="logo">
+        <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png" alt="Logo">
+        <div class="logo-text">Basic Touch Pro</div>
+      </div>
+      <img id="profile-pic" class="profile" src="" alt="Profile" onclick="goToPage('tg.html')">
+    </div>
+
+    <div class="container">
+        <div class="input-group">
+            <label for="filename" class="input-label">File Name:</label>
+            <div class="filename-container">
+                <input type="text" id="filename" class="input-field filename-input" placeholder="Enter file name">
+                <div class="extension-display" id="extensionDisplay">.txt</div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="filetype" class="input-label">File Type:</label>
+            <select id="filetype" class="select-field">
+                <option value="text/plain">Text File (.txt)</option>
+                <option value="text/html">HTML File (.html)</option>
+                <option value="text/css">CSS File (.css)</option>
+                <option value="text/javascript">JavaScript File (.js)</option>
+                <option value="text/xml">XML File (.xml)</option>
+                <option value="image/svg+xml">SVG File (.svg)</option>
+                <option value="application/json">JSON File (.json)</option>
+                <option value="text/x-python">Python File (.py)</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="filecontent" class="input-label">File Content:</label>
+            <textarea id="filecontent" class="textarea-field" placeholder="Enter your text content here..."></textarea>
+        </div>
+
+        <button id="convertBtn" class="convert-btn">
+            <i class="fas fa-file-export"></i> Convert File
+        </button>
+
+        <div class="error" id="errorMessage"></div>
+
+        <div class="processing-overlay" id="processingOverlay">
+            <i class="fas fa-spinner spinner" id="spinnerIcon"></i>
+            <i class="fas fa-check-circle success-icon" id="successIcon"></i>
+            <div class="processing-text" id="processingText">Creating file...</div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // Back button handling
+        Telegram.WebApp.BackButton.show();
+        Telegram.WebApp.BackButton.onClick(() => {
+            window.location.href = "index.html"; // Redirect to PHP index
+        });
+
+        // Button navigation
+        function goToPage(page) {
+            window.location.href = page;
+        }
+
+        // Apply Telegram theme
+        function applyTheme() {
+            const theme = tg.colorScheme;
+            document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+        }
+
+        // Listen for theme changes
+        tg.onEvent('themeChanged', applyTheme);
+        applyTheme();
+
+        // Get user info and set profile picture
+        const user = Telegram.WebApp.initDataUnsafe.user || {};
+        const username = user.username || 'user';
+        const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Telegram User';
+        const profilePicUrl = `https://t.me/i/userpic/320/${username}.jpg`;
+        
+        // Set profile picture
+        document.getElementById('profile-pic').src = profilePicUrl;
+
+        // DOM elements
+        const filenameInput = document.getElementById('filename');
+        const filetypeSelect = document.getElementById('filetype');
+        const filecontentTextarea = document.getElementById('filecontent');
+        const convertBtn = document.getElementById('convertBtn');
+        const extensionDisplay = document.getElementById('extensionDisplay');
+        const processingOverlay = document.getElementById('processingOverlay');
+        const spinnerIcon = document.getElementById('spinnerIcon');
+        const successIcon = document.getElementById('successIcon');
+        const processingText = document.getElementById('processingText');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // File extensions mapping
+        const fileExtensions = {
+            'text/plain': '.txt',
+            'text/html': '.html',
+            'text/css': '.css',
+            'text/javascript': '.js',
+            'text/xml': '.xml',
+            'image/svg+xml': '.svg',
+            'application/json': '.json',
+            'text/x-python': '.py'
+        };
+
+        // Update extension display when file type changes
+        filetypeSelect.addEventListener('change', () => {
+            const selectedType = filetypeSelect.value;
+            extensionDisplay.textContent = fileExtensions[selectedType] || '.txt';
+        });
+
+        // Convert and send file
+        convertBtn.addEventListener('click', () => {
+            const filename = filenameInput.value.trim();
+            const filetype = filetypeSelect.value;
+            const content = filecontentTextarea.value.trim();
+            const extension = fileExtensions[filetype] || '.txt';
+
+            if (!filename) {
+                showError('Please enter a file name');
+                return;
+            }
+
+            if (!content) {
+                showError('Please enter some content');
+                return;
+            }
+
+            // Start processing
+            startProcessing();
+
+            // Create the file blob (Client Side)
+            const fullFilename = filename + extension;
+            const blob = new Blob([content], { type: filetype });
+
+            // Send to Telegram (Via PHP Proxy)
+            sendToTelegram(blob, fullFilename, content);
+        });
+
+        function startProcessing() {
+            // Show processing UI
+            errorMessage.style.display = 'none';
+            spinnerIcon.style.display = 'block';
+            successIcon.style.display = 'none';
+            processingText.textContent = "Creating file...";
+            processingOverlay.style.display = 'flex';
+            convertBtn.disabled = true;
+        }
+
+        function endProcessing() {
+            spinnerIcon.style.display = 'none';
+            convertBtn.disabled = false;
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        function sendToTelegram(blob, filename, content) {
+            // Update UI to sending state
+            spinnerIcon.style.display = 'block';
+            processingText.textContent = "Creating file...";
+
+            // Get user ID from Telegram WebApp
+            const userId = user.id;
+            
+            if (!userId) {
+                endProcessing();
+                showError('Unable to get your Telegram user ID.');
+                return;
+            }
+
+            // Prepare the caption
+            const caption = `${fullName}, here's your file: ${filename}`;
+
+            // Convert blob to File object for FormData
+            const file = new File([blob], filename, { type: blob.type });
+
+            // Create FormData for the request
+            const formData = new FormData();
+            formData.append('chat_id', userId);
+            formData.append('document', file);
+            formData.append('caption', caption);
+
+            // SECURE CHANGE: We post to this PHP file instead of the Telegram API directly
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    // Show success
+                    spinnerIcon.style.display = 'none';
+                    successIcon.style.display = 'block';
+                    processingText.textContent = "Sent successfully!";
+                    
+                    // Show Telegram alert and close
+                    setTimeout(() => {
+                        Telegram.WebApp.showAlert('File created and sent successfully! ✅', () => {
+                            tg.close();
+                        });
+                    }, 1000);
+                } else {
+                    endProcessing();
+                    showError('Failed to send file to Telegram');
+                }
+            })
+            .catch(error => {
+                endProcessing();
+                showError('Error sending file');
+                console.error('Error:', error);
+            });
+        }
+    </script>
+    
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const AdController = window.Adsgram.init({ blockId: "int-19383" });
+
+        AdController.show().then((result) => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                
+                setTimeout(() => {
+                    window.Telegram.WebApp.showAlert('Thanks for support 💝');
+                }, 200);
+            }
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

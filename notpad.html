@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Basic Touch Pro</title>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap");
+
+      :root {
+        --telegram-bg: #ffffff;
+        --telegram-text: #000000;
+        --telegram-secondary: #707579;
+        --telegram-card: #ffffff;
+        --telegram-border: #e0e0e0;
+        --telegram-blue: #0088cc;
+        --telegram-green: #2eab5d;
+        --telegram-red: #ff3b30;
+        --telegram-purple: #9b59b6;
+        --telegram-orange: #ff9500;
+        --telegram-light: #ebedf0;
+      }
+
+      [data-theme="dark"] {
+        --telegram-bg: #17212b;
+        --telegram-text: #e1e3e6;
+        --telegram-secondary: #a8b2bb;
+        --telegram-card: #232f3d;
+        --telegram-border: #2c3a48;
+        --telegram-light: #2b5278;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Roboto", sans-serif;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        user-select: none;
+        background: var(--telegram-bg);
+        color: var(--telegram-text);
+        padding: 20px;
+        transition: all 0.3s ease;
+      }
+
+      /* Header Styles */
+      .header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--telegram-border);
+        background-color: var(--telegram-card);
+        z-index: 100;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .logo img {
+        width: 30px;
+        height: 30px;
+      }
+
+      .logo-text {
+        font-weight: bold;
+        font-size: 18px;
+        color: var(--telegram-blue);
+      }
+
+      .profile {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+      }
+
+      .profile:hover {
+        transform: scale(1.1);
+      }
+
+      .search-container {
+        margin-bottom: 20px;
+        position: relative;
+        margin-top: 70px;
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 12px 20px;
+        background: var(--telegram-card);
+        border: 1px solid var(--telegram-border);
+        border-radius: 12px;
+        color: var(--telegram-text);
+        font-size: 16px;
+        outline: none;
+      }
+
+      .search-input::placeholder {
+        color: var(--telegram-secondary);
+      }
+
+      .notes-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 12px;
+      }
+
+      .note {
+        background: var(--telegram-card);
+        border: 1px solid var(--telegram-border);
+        border-radius: 12px;
+        padding: 12px;
+        transition: transform 0.2s ease-in-out;
+        animation: slideUp 0.3s ease-in-out;
+      }
+
+      .note:hover {
+        transform: scale(1.05);
+      }
+
+      .note h3 {
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--telegram-text);
+        max-width: 100%;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+      }
+
+      .note p {
+        font-size: 12px;
+        color: var(--telegram-secondary);
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        margin-bottom: 4px;
+        max-height: 54px;
+      }
+
+      .note .time {
+        font-size: 10px;
+        color: var(--telegram-secondary);
+        margin-top: 8px;
+      }
+
+      .fab {
+        position: fixed;
+        bottom: 40px;
+        right: 20px;
+        width: 56px;
+        height: 56px;
+        background: var(--telegram-orange);
+        color: #000;
+        font-size: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s ease-in-out;
+        z-index: 101;
+      }
+
+      .fab:hover {
+        transform: scale(1.1);
+      }
+
+      .fab:active {
+        transform: scale(0.9);
+      }
+
+      .popup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: var(--telegram-bg);
+        color: var(--telegram-text);
+        display: none;
+        flex-direction: column;
+        padding: 20px;
+        z-index: 200;
+        animation: fadeIn 0.3s ease-in-out;
+      }
+
+      .popup.active {
+        display: flex;
+      }
+
+      .popup-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        font-size: 18px;
+        font-weight: 700;
+        
+      }
+
+      .popup-header .back-btn {
+        font-size: 24px;
+        cursor: pointer;
+        color: var(--telegram-text);
+      }
+
+      .popup-meta {
+        font-size: 12px;
+        color: var(--telegram-secondary);
+        margin-bottom: 15px;
+      }
+
+      .popup-title,
+      .popup-content {
+        width: 100%;
+        background: none;
+        border: none;
+        color: var(--telegram-text);
+        outline: none;
+      }
+
+      .popup-title {
+        font-size: 22px;
+        font-weight: bold;
+        margin-bottom: 8px;
+      }
+
+      .popup-content {
+        font-size: 16px;
+        line-height: 1.5;
+        resize: none;
+        flex-grow: 1;
+      }
+
+      .popup-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+      }
+
+      .popup-actions button {
+        width: 40px;
+        height: 40px;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+      }
+
+      .save-btn {
+        background: var(--telegram-green);
+        color: white;
+      }
+
+      .delete-btn {
+        background: var(--telegram-red);
+        color: white;
+      }
+
+      .export-btn {
+        background: var(--telegram-blue);
+        color: white;
+      }
+
+      .no-notes {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        height: 60vh;
+        text-align: center;
+        opacity: 0.7;
+        margin-top: 70px;
+      }
+
+      .no-notes .profile-placeholder {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        overflow: hidden;
+        margin-bottom: 20px;
+      }
+
+      .no-notes .profile-placeholder img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .no-notes p {
+        color: var(--telegram-secondary);
+        font-size: 16px;
+      }
+
+      .processing {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 300;
+      }
+
+      .processing.active {
+        display: flex;
+      }
+
+      .processing-icon {
+        font-size: 50px;
+        color: var(--telegram-orange);
+        margin-bottom: 20px;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+    </style>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  </head>
+  <body>
+    <div class="header">
+      <div class="logo">
+        <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png" alt="Logo">
+        <div class="logo-text">Basic Touch Pro</div>
+      </div>
+      <img id="profile-pic" class="profile" src="" alt="Profile" onclick="goToPage('tg.html')">
+    </div>
+
+    <div class="search-container">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search notes..." />
+    </div>
+
+    <div class="notes-container" id="notesContainer"></div>
+
+    <div class="no-notes" id="noNotesContainer">
+      <div class="profile-placeholder">
+        <img id="profile-placeholder-img" src="" alt="Profile">
+      </div>
+      <p>No notes yet. Add one!</p>
+    </div>
+
+    <div class="fab" onclick="openNotePopup()">
+      <i class="fa fa-plus"></i>
+    </div>
+
+    <div class="popup" id="popup">
+      <div class="popup-header">
+        <div class="back-btn" onclick="closePopup()">
+          <i class="fa fa-arrow-left"></i>
+        </div>
+        <div class="popup-actions">
+          <button class="save-btn" onclick="saveNote()" title="Save">
+            <i class="fa fa-save"></i>
+          </button>
+          <button class="delete-btn" id="deleteNoteBtn" onclick="confirmDelete()" title="Delete">
+            <i class="fa fa-trash"></i>
+          </button>
+          <button class="export-btn" id="exportNoteBtn" onclick="exportNote()" title="Export">
+            <i class="fa fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+      <div class="popup-meta" id="popupMeta"></div>
+      <input type="text" id="popupTitle" class="popup-title" placeholder="Title" />
+      <textarea id="popupContent" class="popup-content" placeholder="Write your note..."></textarea>
+    </div>
+
+    <div class="processing" id="processing">
+      <div class="processing-icon">
+        <i class="fa fa-circle-notch"></i>
+      </div>
+      <p>Processing...</p>
+    </div>
+
+    <script>
+      // Telegram WebApp initialization
+      const tgWebApp = Telegram.WebApp;
+      tgWebApp.ready();
+      tgWebApp.expand();
+      
+      // Set theme based on Telegram theme
+      function setTheme() {
+        const isDark = tgWebApp.colorScheme === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      }
+      
+      // Listen for theme changes
+      tgWebApp.onEvent('themeChanged', setTheme);
+      setTheme();
+
+      // Back button handling
+      tgWebApp.BackButton.show();
+      tgWebApp.BackButton.onClick(() => {
+        window.location.href = "index.html"; // Redirect to PHP index
+      });
+
+      // Get user info from Telegram
+      const user = tgWebApp.initDataUnsafe.user || {};
+      const userId = user.id;
+      const username = user.username || 'user';
+      const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Telegram User';
+      const profilePicUrl = `https://t.me/i/userpic/160/${username}.jpg`;
+
+      // Set profile pictures
+      document.getElementById('profile-pic').src = profilePicUrl;
+      document.getElementById('profile-placeholder-img').src = profilePicUrl;
+
+      // Navigation function
+      function goToPage(page) {
+        window.location.href = page;
+      }
+
+      // Notes functionality
+      let currentNoteIndex = null;
+      let notes = JSON.parse(localStorage.getItem('notes')) || [];
+
+      // Search functionality
+      document.getElementById('searchInput').addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const noteElements = document.querySelectorAll('.note');
+        
+        noteElements.forEach((noteElement, index) => {
+          const title = notes[index].title.toLowerCase();
+          const content = notes[index].content.toLowerCase();
+          
+          if (title.includes(searchTerm) || content.includes(searchTerm)) {
+            noteElement.style.display = 'block';
+          } else {
+            noteElement.style.display = 'none';
+          }
+        });
+      });
+
+      // Render notes on load
+      document.addEventListener('DOMContentLoaded', renderNotes);
+
+      function renderNotes() {
+        const notesContainer = document.getElementById('notesContainer');
+        const noNotesContainer = document.getElementById('noNotesContainer');
+        
+        notesContainer.innerHTML = '';
+        
+        if (notes.length === 0) {
+          noNotesContainer.style.display = 'flex';
+          notesContainer.style.display = 'none';
+        } else {
+          noNotesContainer.style.display = 'none';
+          notesContainer.style.display = 'grid';
+          
+          notes.forEach((note, index) => {
+            const noteElement = document.createElement('div');
+            noteElement.className = 'note';
+            
+            // Truncate title to show max 5 words
+            const titleWords = note.title.split(' ');
+            const truncatedTitle = titleWords.length > 5 
+              ? titleWords.slice(0, 5).join(' ') + '...' 
+              : note.title;
+            
+            noteElement.innerHTML = `
+              <h3 title="${note.title}">${truncatedTitle}</h3>
+              <p>${note.content}</p>
+              <div class="time">${formatTime(note.timestamp)}</div>
+            `;
+            noteElement.addEventListener('click', () => openPopup(index));
+            notesContainer.appendChild(noteElement);
+          });
+        }
+      }
+
+      function openNotePopup() {
+        openPopup(null);
+      }
+
+      function openPopup(index = null) {
+        currentNoteIndex = index;
+        const popup = document.getElementById('popup');
+        const titleInput = document.getElementById('popupTitle');
+        const contentInput = document.getElementById('popupContent');
+        const meta = document.getElementById('popupMeta');
+        const deleteBtn = document.getElementById('deleteNoteBtn');
+        const exportBtn = document.getElementById('exportNoteBtn');
+        
+        if (index !== null) {
+          titleInput.value = notes[index].title;
+          contentInput.value = notes[index].content;
+          meta.textContent = formatTime(notes[index].timestamp);
+          deleteBtn.style.display = 'flex';
+          exportBtn.style.display = 'flex';
+        } else {
+          titleInput.value = '';
+          contentInput.value = '';
+          meta.textContent = formatTime(new Date());
+          deleteBtn.style.display = 'none';
+          exportBtn.style.display = 'none';
+        }
+        
+        popup.classList.add('active');
+        tgWebApp.BackButton.show();
+        titleInput.focus();
+      }
+
+      function closePopup() {
+        document.getElementById('popup').classList.remove('active');
+        if (notes.length === 0) {
+          tgWebApp.BackButton.hide();
+        }
+      }
+
+      function saveNote() {
+        const title = document.getElementById('popupTitle').value.trim();
+        const content = document.getElementById('popupContent').value.trim();
+        
+        if (!title || !content) {
+          tgWebApp.showAlert('Please enter both title and content');
+          return;
+        }
+        
+        const timestamp = new Date().toISOString();
+        
+        if (currentNoteIndex !== null) {
+          notes[currentNoteIndex] = { title, content, timestamp };
+        } else {
+          notes.unshift({ title, content, timestamp });
+        }
+        
+        localStorage.setItem('notes', JSON.stringify(notes));
+        closePopup();
+        renderNotes();
+        tgWebApp.showAlert('Note saved successfully!');
+      }
+
+      function confirmDelete() {
+        tgWebApp.showConfirm('Are you sure you want to delete this note?', (isConfirmed) => {
+          if (isConfirmed) {
+            deleteNote();
+          }
+        });
+      }
+
+      function deleteNote() {
+        if (currentNoteIndex !== null) {
+          notes.splice(currentNoteIndex, 1);
+          localStorage.setItem('notes', JSON.stringify(notes));
+          closePopup();
+          renderNotes();
+          tgWebApp.showAlert('Note deleted successfully!');
+        }
+      }
+
+      function exportNote() {
+        if (currentNoteIndex !== null) {
+          showProcessing();
+          
+          setTimeout(() => {
+            const note = notes[currentNoteIndex];
+            const text = `${note.title}\n\n${note.content}`;
+            
+            // Create and download text file (Client side functionality)
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${note.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // Send to Telegram bot (Via PHP Server)
+            sendToTelegram(note);
+          }, 1000);
+        }
+      }
+
+      function sendToTelegram(note) {
+        if (!userId) {
+          hideProcessing();
+          tgWebApp.showAlert('Error: Could not get your user ID');
+          return;
+        }
+        
+        // SECURE CHANGE: We now call our PHP backend (current file) instead of direct Telegram API
+        const text = `*${note.title}*\n\n${note.content}\n\n_Saved from Basic Touch Pro_`;
+        
+        fetch(window.location.href, { // POST to self
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'send_telegram', // Tell PHP what to do
+            chat_id: userId,
+            text: text
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          hideProcessing();
+          if (data.ok) {
+            tgWebApp.showAlert('Note sent to Telegram successfully!');
+          } else {
+            tgWebApp.showAlert('Failed to send note. Please try again.');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          hideProcessing();
+          tgWebApp.showAlert('Error sending note. Please check your connection.');
+        });
+      }
+
+      function showProcessing() {
+        document.getElementById('processing').classList.add('active');
+      }
+
+      function hideProcessing() {
+        document.getElementById('processing').classList.remove('active');
+      }
+
+      function formatTime(timestamp) {
+        const now = new Date();
+        const noteTime = new Date(timestamp);
+        const diffMs = now - noteTime;
+        const diffMinutes = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMinutes < 1) return "Just now";
+        if (diffMinutes < 60) return `${diffMinutes} min ago`;
+        if (diffHours < 24) return `${diffHours} hours ago`;
+        if (diffDays < 7) return `${diffDays} days ago`;
+
+        return noteTime.toLocaleDateString();
+      }
+    </script>
+  
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const AdController = window.Adsgram.init({ blockId: "int-19383" });
+
+        AdController.show().then((result) => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                
+                setTimeout(() => {
+                    window.Telegram.WebApp.showAlert('Thanks for support 💝');
+                }, 200);
+            }
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+</script>  <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

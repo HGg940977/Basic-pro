@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Color Code Converter (HEX ↔ RGB) - Basic Touch Pro</title>
+    <meta name="description" content="Convert HEX to RGB and RGB to HEX with an interactive color picker. Instant, real-time color conversion tool.">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg: var(--tg-theme-bg-color, #ffffff);
+            --text: var(--tg-theme-text-color, #000000);
+            --hint: var(--tg-theme-hint-color, #707579);
+            --btn: var(--tg-theme-button-color, #0088cc);
+            --btn-text: var(--tg-theme-button-text-color, #ffffff);
+            --secondary: var(--tg-theme-secondary-bg-color, #f4f4f5);
+            --border: var(--tg-theme-hint-color, #e0e0e0);
+            --error: #ff3b30;
+        }
+
+        body {
+            font-family: -apple-system, sans-serif;
+            margin: 0; background-color: var(--secondary); color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* হেডার */
+        .header {
+            padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;
+            background: var(--bg); border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo img { width: 30px; height: 30px; }
+        .logo-text { font-weight: bold; font-size: 18px; color: var(--btn); }
+        .profile { width: 35px; height: 35px; border-radius: 50%; border: 1px solid var(--btn); cursor: pointer; object-fit: cover; }
+
+        .container { padding: 20px 15px; max-width: 500px; margin: 0 auto; }
+
+        /* টুল কার্ড */
+        .card {
+            background: var(--bg); border-radius: 16px; padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border);
+        }
+
+        /* কালার প্রিভিউ ও পিকার */
+        .preview-section {
+            display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 25px;
+        }
+        .color-display {
+            width: 100%; height: 100px; border-radius: 12px;
+            border: 4px solid var(--secondary); box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+            transition: 0.3s;
+        }
+        .picker-container {
+            width: 100%; display: flex; align-items: center; gap: 10px;
+            background: var(--secondary); padding: 10px; border-radius: 10px;
+        }
+        input[type="color"] {
+            width: 50px; height: 50px; border: none; background: none; cursor: pointer;
+        }
+
+        /* ইনপুট গ্রুপ */
+        .input-box { margin-bottom: 20px; }
+        .label { font-size: 13px; color: var(--hint); margin-bottom: 8px; display: block; font-weight: 600; }
+        
+        .field-row { display: flex; gap: 8px; align-items: center; }
+        input[type="text"], input[type="number"] {
+            flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border);
+            background: var(--secondary); color: var(--text); font-size: 16px; outline: none;
+        }
+        input:focus { border-color: var(--btn); }
+
+        .copy-btn {
+            background: var(--btn); color: var(--btn-text); border: none;
+            width: 44px; height: 44px; border-radius: 8px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 18px;
+        }
+        .copy-btn:active { transform: scale(0.95); }
+
+        .rgb-inputs { display: flex; gap: 8px; }
+        .rgb-field { flex: 1; text-align: center; }
+
+        .error-msg { color: var(--error); font-size: 12px; margin-top: 5px; display: none; }
+
+        h1 { font-size: 22px; text-align: center; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="logo">
+        <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png" alt="Logo">
+        <div class="logo-text">Basic Touch Pro</div>
+    </div>
+    <!-- Profile picture clicks to tg.html -->
+    <img id="u-avatar" class="profile" src="https://ui-avatars.com/api/?name=User" alt="P" onclick="window.location.href='tg.html'">
+</div>
+
+<div class="container">
+    <h1>Color Converter</h1>
+    
+    <div class="card">
+        <!-- Preview & Picker -->
+        <div class="preview-section">
+            <div id="colorPreview" class="color-display" style="background-color: #0088cc;"></div>
+            <div class="picker-container">
+                <input type="color" id="colorPicker" value="#0088cc" oninput="updateFromPicker(this.value)">
+                <span style="font-size: 14px; font-weight: 600;">Pick a Live Color</span>
+            </div>
+        </div>
+
+        <!-- HEX Section -->
+        <div class="input-box">
+            <label class="label">HEX CODE</label>
+            <div class="field-row">
+                <input type="text" id="hexInput" value="#0088cc" placeholder="#FFFFFF" oninput="updateFromHex(this.value)">
+                <button class="copy-btn" onclick="copyValue('hexInput')">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+            <div id="hexError" class="error-msg">Invalid HEX code!</div>
+        </div>
+
+        <!-- RGB Section -->
+        <div class="input-box">
+            <label class="label">RGB VALUE</label>
+            <div class="field-row">
+                <div class="rgb-inputs">
+                    <input type="number" id="rVal" class="rgb-field" value="0" min="0" max="255" oninput="updateFromRgb()">
+                    <input type="number" id="gVal" class="rgb-field" value="136" min="0" max="255" oninput="updateFromRgb()">
+                    <input type="number" id="bVal" class="rgb-field" value="204" min="0" max="255" oninput="updateFromRgb()">
+                </div>
+                <button class="copy-btn" onclick="copyRgb()">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+            <div id="rgbError" class="error-msg">RGB values must be 0-255!</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.BackButton.show();
+    tg.BackButton.onClick(() => window.location.href = "index.html");
+
+    // Fetch user profile from Telegram if available
+    const user = tg.initDataUnsafe.user || {};
+    if(user.username) document.getElementById('u-avatar').src = `https://t.me/i/userpic/160/${user.username}.jpg`;
+
+    // Elements
+    const colorPreview = document.getElementById('colorPreview');
+    const colorPicker = document.getElementById('colorPicker');
+    const hexInput = document.getElementById('hexInput');
+    const rInput = document.getElementById('rVal');
+    const gInput = document.getElementById('gVal');
+    const bInput = document.getElementById('bVal');
+
+    // 1. Update from Color Picker
+    function updateFromPicker(hex) {
+        updateUI(hex);
+    }
+
+    // 2. Update from HEX Input
+    function updateFromHex(hex) {
+        const hexRegex = /^#?([a-f\d]{3}|[a-f\d]{6})$/i;
+        if (hexRegex.test(hex)) {
+            if (hex.charAt(0) !== '#') hex = '#' + hex;
+            updateUI(hex);
+            document.getElementById('hexError').style.display = 'none';
+        } else {
+            document.getElementById('hexError').style.display = 'block';
+        }
+    }
+
+    // 3. Update from RGB Input
+    function updateFromRgb() {
+        let r = parseInt(rInput.value) || 0;
+        let g = parseInt(gInput.value) || 0;
+        let b = parseInt(bInput.value) || 0;
+
+        if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255) {
+            const hex = rgbToHex(r, g, b);
+            updateUI(hex);
+            document.getElementById('rgbError').style.display = 'none';
+        } else {
+            document.getElementById('rgbError').style.display = 'block';
+        }
+    }
+
+    // Master UI Update function
+    function updateUI(hex) {
+        colorPreview.style.backgroundColor = hex;
+        colorPicker.value = hex;
+        hexInput.value = hex.toUpperCase();
+        
+        const rgb = hexToRgb(hex);
+        if (rgb) {
+            rInput.value = rgb.r;
+            gInput.value = rgb.g;
+            bInput.value = rgb.b;
+        }
+    }
+
+    // Helper: HEX to RGB
+    function hexToRgb(hex) {
+        var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+        hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+            return r + r + g + g + b + b;
+        });
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+
+    // Helper: RGB to HEX
+    function rgbToHex(r, g, b) {
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+
+    // Copy to Clipboard
+    function copyValue(id) {
+        const input = document.getElementById(id);
+        input.select();
+        document.execCommand('copy');
+        tg.showAlert("HEX Code copied! ✅");
+    }
+
+    function copyRgb() {
+        const val = `rgb(${rInput.value}, ${gInput.value}, ${bInput.value})`;
+        const el = document.createElement('textarea');
+        el.value = val;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        tg.showAlert("RGB Value copied! ✅");
+    }
+
+    // Initialize UI on load
+    updateUI("#0088cc");
+</script>
+
+
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const AdController = window.Adsgram.init({ blockId: "int-19383" });
+
+        AdController.show().then((result) => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                
+                setTimeout(() => {
+                    window.Telegram.WebApp.showAlert('Thanks for support 💝');
+                }, 200);
+            }
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+</script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Encryptor - @BasicTouchPro</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --tg-bg: #ffffff; --tg-text: #000000; --tg-sec: #707579;
+            --tg-border: #e0e0e0; --tg-blue: #0088cc; --tg-card: #f8f9fa;
+            --tg-green: #28a745; --tg-orange: #f39c12;
+        }
+        [data-theme="dark"] {
+            --tg-bg: #17212b; --tg-text: #e1e3e6; --tg-sec: #a8b2bb;
+            --tg-border: #2c3a48; --tg-card: #232f3d;
+        }
+        body { font-family: -apple-system, sans-serif; background: var(--tg-bg); color: var(--tg-text); margin: 0; padding: 0; overflow-x: hidden; }
+        
+        .header {
+            padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--tg-border); background: var(--tg-bg); position: sticky; top:0; z-index:100;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo img { width: 32px; height: 32px; border-radius: 5px; }
+        .logo-text { font-weight: bold; font-size: 18px; color: var(--tg-blue); }
+        .profile { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--tg-blue); cursor: pointer; object-fit: cover; }
+
+        .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+
+        /* Level Toggles at Top */
+        .level-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .btn-level { flex: 1; padding: 14px; border: 2px solid var(--tg-blue); background: transparent; color: var(--tg-blue); border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 13px; }
+        .btn-level.active { background: var(--tg-blue); color: #fff; }
+
+        .card { background: var(--tg-card); border-radius: 15px; padding: 20px; border: 1px solid var(--tg-border); margin-bottom: 15px; }
+        label { font-size: 12px; color: var(--tg-blue); font-weight: bold; margin-bottom: 8px; display: block; }
+        
+        textarea { 
+            width: 100%; height: 180px; padding: 12px; border-radius: 12px; border: 1px solid var(--tg-border); 
+            background: var(--tg-bg); color: var(--tg-text); outline: none; transition: 0.3s; box-sizing: border-box; font-family: monospace; font-size: 13px; resize: none;
+        }
+        textarea:focus { border-color: var(--tg-blue); box-shadow: 0 0 8px rgba(0, 136, 204, 0.2); }
+
+        .upload-area {
+            border: 2px dashed var(--tg-border); border-radius: 12px; padding: 15px;
+            text-align: center; cursor: pointer; transition: 0.3s; margin-bottom: 15px; background: var(--tg-bg);
+        }
+        .upload-area:hover, .upload-area.dragover { border-color: var(--tg-blue); background: rgba(0, 136, 204, 0.05); }
+
+        .btn-row { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-action { flex: 1; color: #fff; border: none; padding: 15px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        
+        .btn-encrypt { background: var(--tg-blue); }
+        .btn-decrypt { background: var(--tg-orange); }
+        .btn-copy { background: var(--tg-green); width: 100%; margin-bottom: 10px; }
+        .btn-download { background: var(--tg-blue); width: 100%; }
+
+        #result-box { display: none; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+      <div class="logo">
+        <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png">
+        <div class="logo-text">Basic Touch Pro</div>
+      </div>
+      <img id="profile-pic" class="profile" src="" onclick="window.location.href='tg.html'">
+    </div>
+
+    <div class="container">
+        <!-- Step 1: Mode Toggle -->
+        <div class="level-row">
+            <button class="btn-level active" id="lvNormal" onclick="setLevel('normal')"><i class="fas fa-bolt"></i> NORMAL</button>
+            <button class="btn-level" id="lvFull" onclick="setLevel('full')"><i class="fas fa-shield-virus"></i> FULL</button>
+        </div>
+
+        <div class="card">
+            <label><i class="fas fa-file-code"></i> Input HTML or Script:</label>
+            
+            <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-cloud-arrow-up fa-lg" style="color:var(--tg-blue);"></i>
+                <span style="font-size:12px; margin-left:10px; color:var(--tg-sec);">Drag or Upload HTML</span>
+                <input type="file" id="fileInput" accept=".html,.txt" style="display:none">
+            </div>
+
+            <textarea id="mainInput" placeholder="Paste your code here..."></textarea>
+            
+            <div class="btn-row">
+                <button class="btn-action btn-encrypt" onclick="process('encrypt')"><i class="fas fa-lock"></i> ENCRYPT</button>
+                <button class="btn-action btn-decrypt" onclick="process('decrypt')"><i class="fas fa-unlock"></i> DECRYPT</button>
+            </div>
+        </div>
+
+        <!-- Step 2: Result Section -->
+        <div id="result-box" class="card">
+            <label><i class="fas fa-check-circle"></i> Resulting Code:</label>
+            <textarea id="resultOutput" readonly></textarea>
+            
+            <div class="btn-row" style="flex-direction: column; margin-top: 15px;">
+                <button class="btn-action btn-copy" onclick="copyResult()"><i class="fas fa-copy"></i> COPY</button>
+                <button class="btn-action btn-download" id="dlBtn" onclick="downloadTG()"><i class="fas fa-download"></i> DOWNLOAD</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => window.location.href = "index.html");
+
+        const user = tg.initDataUnsafe.user || {};
+        document.getElementById('profile-pic').src = user.username ? `https://t.me/i/userpic/160/${user.username}.jpg` : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+        document.documentElement.setAttribute('data-theme', tg.colorScheme);
+
+        let selectedLevel = 'normal';
+
+        function setLevel(lvl) {
+            selectedLevel = lvl;
+            document.getElementById('lvNormal').classList.toggle('active', lvl === 'normal');
+            document.getElementById('lvFull').classList.toggle('active', lvl === 'full');
+        }
+
+        // --- File Upload ---
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        fileInput.onchange = (e) => loadFile(e.target.files[0]);
+        ['dragenter', 'dragover'].forEach(e => dropZone.addEventListener(e, (ev) => { ev.preventDefault(); dropZone.classList.add('dragover'); }));
+        ['dragleave', 'drop'].forEach(e => dropZone.addEventListener(e, (ev) => { ev.preventDefault(); dropZone.classList.remove('dragover'); }));
+        dropZone.addEventListener('drop', (e) => { e.preventDefault(); loadFile(e.dataTransfer.files[0]); });
+
+        function loadFile(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('mainInput').value = e.target.result;
+                tg.showAlert("File loaded! ✅");
+            };
+            reader.readAsText(file);
+        }
+
+        // --- Core Engine ---
+        function process(mode) {
+            const input = document.getElementById('mainInput').value.trim();
+            if(!input) { tg.showAlert("Please enter some code first!"); return; }
+
+            let result = "";
+            try {
+                if(mode === 'encrypt') {
+                    if(selectedLevel === 'normal') {
+                        result = `<script language=javascript>document.write(unescape('${escape(input)}'))<\/script>`;
+                    } else {
+                        const b64 = btoa(unescape(encodeURIComponent(input)));
+                        result = `<script language=javascript>(function(_0x){document.write(decodeURIComponent(escape(atob(_0x))));})('${b64}')<\/script>`;
+                    }
+                } else {
+                    // Optimized Decrypt
+                    if (input.includes("unescape('")) {
+                        const m = input.match(/unescape\(['"](.*?)['"]\)/);
+                        if (m) result = unescape(m[1]);
+                    } else if (input.includes("atob(")) {
+                        const m = input.match(/atob\(['"](.*?)['"]\)/) || input.match(/\(['"](.*?)['"]\)/);
+                        if (m) result = decodeURIComponent(escape(atob(m[1])));
+                    } else {
+                        tg.showAlert("❌ This code is not recognized as encrypted HTML script."); return;
+                    }
+                }
+                document.getElementById('resultOutput').value = result;
+                document.getElementById('result-box').style.display = 'block';
+                if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            } catch(e) {
+                tg.showAlert("⚠️ An error occurred while processing.");
+            }
+        }
+
+        function copyResult() {
+            const out = document.getElementById('resultOutput');
+            out.select();
+            document.execCommand('copy');
+            tg.showAlert("✅ Code Copied! Refreshing...", () => location.reload());
+        }
+
+        async function downloadTG() {
+            const btn = document.getElementById('dlBtn');
+            const code = document.getElementById('resultOutput').value;
+
+            btn.disabled = true;
+            btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> SENDING...";
+
+            const fd = new FormData();
+            fd.append('action', 'process_download');
+            fd.append('chat_id', user.id || '');
+            fd.append('result_code', code);
+
+            try {
+                const res = await fetch(window.location.href, { method: 'POST', body: fd });
+                const data = await res.json();
+                if(data.ok) {
+                    tg.showAlert("📬 Project sent to Telegram! Refreshing...", () => location.reload());
+                } else {
+                    tg.showAlert("❌ Failed to send to Telegram.");
+                    btn.disabled = false;
+                    btn.innerHTML = "<i class='fas fa-download'></i> DOWNLOAD";
+                }
+            } catch(e) {
+                tg.showAlert("🌐 Connection error!");
+                btn.disabled = false;
+            }
+        }
+    </script>
+    
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const AdController = window.Adsgram.init({ blockId: "int-19383" });
+
+        AdController.show().then((result) => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                
+                setTimeout(() => {
+                    window.Telegram.WebApp.showAlert('Thanks for support 💝');
+                }, 200);
+            }
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

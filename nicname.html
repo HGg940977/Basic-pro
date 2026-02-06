@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stylish Name Pro - @BasicTouchPro</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --tg-bg: #ffffff; --tg-text: #000000; --tg-sec: #707579;
+            --tg-border: #e0e0e0; --tg-blue: #0088cc; --tg-card: #f8f9fa;
+        }
+        [data-theme="dark"] {
+            --tg-bg: #17212b; --tg-text: #e1e3e6; --tg-sec: #a8b2bb;
+            --tg-border: #2c3a48; --tg-card: #232f3d;
+        }
+        body { font-family: -apple-system, sans-serif; background: var(--tg-bg); color: var(--tg-text); margin: 0; padding: 0; transition: 0.3s; }
+        
+        .header {
+            padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--tg-border); background: var(--tg-bg); position: sticky; top:0; z-index:100;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo img { width: 32px; height: 32px; border-radius: 5px; }
+        .logo-text { font-weight: bold; font-size: 18px; color: var(--tg-blue); }
+        .profile { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--tg-blue); cursor: pointer; object-fit: cover; }
+
+        .container { max-width: 550px; margin: 0 auto; padding: 20px; }
+        
+        /* Input Box with Focus Glow */
+        .input-card { background: var(--tg-card); border-radius: 15px; padding: 20px; border: 1px solid var(--tg-border); margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        label { font-size: 12px; color: var(--tg-sec); font-weight: bold; margin-bottom: 8px; display: block; }
+        input[type="text"] { 
+            width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--tg-border); 
+            background: var(--tg-bg); color: var(--tg-text); outline: none; transition: 0.3s; box-sizing: border-box; font-size: 18px; text-align: center;
+        }
+        input[type="text"]:focus { border-color: var(--tg-blue); box-shadow: 0 0 15px rgba(0, 136, 204, 0.3); }
+
+        /* Styles Grid */
+        #result-list { display: grid; gap: 12px; }
+        .name-item { 
+            background: var(--tg-card); padding: 15px; border-radius: 12px; border: 1px solid var(--tg-border);
+            display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center;
+        }
+        .name-text { font-size: 18px; color: var(--tg-text); word-break: break-all; }
+        .btn-copy { 
+            background: var(--tg-blue); color: #fff; border: none; padding: 10px 25px; 
+            border-radius: 50px; font-size: 13px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; width: fit-content;
+        }
+        .btn-copy:active { transform: scale(0.95); }
+
+        .empty-msg { text-align: center; color: var(--tg-sec); font-size: 15px; margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+      <div class="logo">
+        <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png">
+        <div class="logo-text">Basic Touch Pro</div>
+      </div>
+      <img id="profile-pic" class="profile" src="" onclick="window.location.href='tg.html'">
+    </div>
+
+    <div class="container">
+        <h3>🎨 Stylish Name Generator Pro</h3>
+        <p style="font-size: 13px; color: var(--tg-sec); margin-bottom: 20px;">Generate massive amounts of fancy styles for Gaming & Social Media.</p>
+        
+        <div class="input-card">
+            <label><i class="fas fa-magic"></i> Enter Name:</label>
+            <input type="text" id="nameInput" placeholder="Enter name here..." maxlength="25" autocomplete="off">
+        </div>
+
+        <div id="result-list">
+            <div class="empty-msg">Waiting for your input... ✨</div>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => window.location.href = "index.html");
+
+        const user = tg.initDataUnsafe.user || {};
+        document.getElementById('profile-pic').src = user.username ? `https://t.me/i/userpic/160/${user.username}.jpg` : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+        document.documentElement.setAttribute('data-theme', tg.colorScheme);
+
+        // Unicode Maps
+        const charMap = {
+            bold: "𝐀𝐁𝐂𝐃𝐄𝐅𝐆𝐇𝐈𝐉𝐊𝐋𝐌𝐍𝐎𝐏𝐐𝐑𝐒𝐓𝐔𝐕𝐖𝐗𝐘𝐙𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳",
+            italic: "𝘈𝘉𝘊𝘋𝘌𝘍𝘎𝘏𝘐𝘑𝘒𝘓𝘔𝘕𝘖𝘗𝘘𝘙𝘚𝘛𝘜𝘝𝘞𝘟𝘠𝘡𝘢𝘣𝘤𝘥𝘦𝘧𝘨𝘩𝘪𝘫𝘬𝘭𝘮𝘯𝘰𝘱𝘲𝘳𝘴𝘵𝘶𝘷𝘸𝘹𝘺𝘻",
+            script: "𝓢𝓒𝓓𝓔𝓕𝓖𝓗𝓘𝓙𝓚𝓛𝓜𝓝𝓞𝓟𝓠𝓡𝓢𝓣𝓤𝓥𝓦𝓧𝓨𝓩𝓪𝓫𝓬𝓭𝓮𝓯𝓰𝓱𝓲𝓳𝓴𝓵𝓶𝓷𝓸𝓹𝓺𝓻𝓼𝓽𝓾𝓿𝔀𝔁𝔂𝔃",
+            mono: "𝙰𝙱𝙲𝙳𝙴𝙵𝙶𝙷𝙸𝙹𝙺𝙻𝙼𝙽𝙾𝙿𝚀𝚁𝚂𝚃𝚄𝚅𝚆𝚇𝚈𝚉𝚊𝚋𝚌𝚍𝚎𝚏𝚐𝚑𝚒𝚓𝚔𝚕𝚖𝚗𝚘𝚙𝚚𝚛𝚜𝚝𝚞𝚟𝚠𝚡𝚢𝚣",
+            fraktur: "𝔄𝔅ℭ𝔇𝔈𝔉ℌℑ𝔍𝔎𝔏𝔐𝔑𝔒𝔓𝔔ℜ𝔗𝔘𝔙𝔚𝔛𝔜ℨ𝔞𝔟𝔠𝔡𝔢𝔣𝔤𝔥𝔦𝔧𝔨𝔩𝔪𝔫𝔬𝔭𝔮𝔯𝔰𝔱𝔲𝔳𝔴𝔵𝔶𝔷",
+            double: "𝔸𝔹ℂ𝔻𝔼𝔽𝔾ℍ𝕀𝕁𝕂𝕃𝕄ℕ𝕆ℙℚℝ𝕊𝕋𝕌𝕍𝕎𝕏𝕐ℤ𝕒𝕓𝕔𝕕𝕖𝕗𝕘𝕙𝕚𝕛𝕜𝕝𝕞𝕟𝕠𝕡𝕢𝕣𝕤𝕥𝕦𝕧𝕨𝕩𝕪𝕫",
+            bubbles: "ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ",
+            squares: "🄰🄱🄲🄳🄴🄵🄿🄷🄸🄹🄺🄻🄼🄽🄾🄿🅀🅁🅂🅃🅄🅅🅆🅇🅈🅉",
+            standard: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+        };
+
+        function transform(name, style) {
+            let res = "";
+            for (let char of name) {
+                let index = charMap.standard.indexOf(char);
+                res += (index > -1 && charMap[style][index]) ? charMap[style][index] : char;
+            }
+            return res;
+        }
+
+        // Patterns categories
+        const heavyPatterns = [
+            "꧁༒☬{n}☬༒꧂", "꧁༺{n}༻꧂", "꧁☬{n}☬꧂", "༺{n}༻", "亗{n}亗", "࿐{n}࿐",
+            "༒『{n}』༒", "☬『{n}』☬", "★『{n}』★", "✧『{n}』✧", "♚『{n}』♚", "♞『{n}』♞",
+            "▄︻┻═┳一{n}一═┳┻︻▄", "︻デ═一{n}═デ︻", "█▓▒░{n}░▒▓█", "༄{n}࿐",
+            "『★{n}★』", "【✦{n}✦】", "《🔥{n}🔥》", "╰{n}╮", "『{n}』", "【{n}】", "《{n}》"
+        ];
+
+        const decorationPatterns = [
+            "❀{n}❀","✿{n}✿","❁{n}❁","★{n}★","☆{n}☆","✩{n}✩","⚡{n}⚡","🔥{n}🔥","💎{n}💎","👑{n}👑",
+            "☠︎{n}☠︎","💀{n}💀","🖤{n}🖤","❤️{n}❤️","💜{n}💜","💙{n}💙","💚{n}💚", "♚{n}♚","♛{n}♛",
+            "➳{n}➳","➵{n}➵","➶{n}➶","✞{n}✞","✟{n}✟","☯{n}☯","♡{n}♡","ღ{n}ღ","❥{n}❥","💫{n}💫",
+            "✨{n}✨","🌟{n}🌟","☀️{n}☀️","🌈{n}🌈","🌸{n}🌸","亗{n}亗","彡{n}彡","乂{n}乂","々{n}々","〆{n}〆"
+        ];
+
+        const nameInput = document.getElementById('nameInput');
+        const resultList = document.getElementById('result-list');
+
+        nameInput.addEventListener('input', () => {
+            const val = nameInput.value.trim();
+            if(!val) {
+                resultList.innerHTML = '<div class="empty-msg">Waiting for your input... ✨</div>';
+                return;
+            }
+
+            resultList.innerHTML = '';
+            
+            let allResults = [];
+
+            // 1. Render Heavy/Big Decorations (TOP)
+            heavyPatterns.forEach(p => allResults.push(p.replace("{n}", val)));
+
+            // 2. Render Unicode Font Styles
+            const fontStyles = ['script', 'bold', 'fraktur', 'double', 'mono', 'bubbles', 'italic'];
+            fontStyles.forEach(style => {
+                let styledName = transform(val, style);
+                allResults.push(styledName);
+                // Add decorations to fonts too
+                allResults.push(`꧁${styledName}꧂`);
+            });
+
+            // 3. Render Decoration Patterns (BOTTOM)
+            decorationPatterns.forEach(p => allResults.push(p.replace("{n}", val)));
+
+            // Inject into UI
+            allResults.forEach(finalName => {
+                const div = document.createElement('div');
+                div.className = 'name-item';
+                div.innerHTML = `
+                    <span class="name-text">${finalName}</span>
+                    <button class="btn-copy" onclick="copyName('${finalName.replace(/'/g, "\\'")}')">
+                        <i class="fas fa-copy"></i> COPY
+                    </button>
+                `;
+                resultList.appendChild(div);
+            });
+        });
+
+        function copyName(text) {
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            
+            tg.showAlert(`Copied: ${text}\n\nPage will refresh now.`, () => {
+                location.reload();
+            });
+        }
+    </script>
+    
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const AdController = window.Adsgram.init({ blockId: "int-19383" });
+
+        AdController.show().then((result) => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                
+                setTimeout(() => {
+                    window.Telegram.WebApp.showAlert('Thanks for support 💝');
+                }, 200);
+            }
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

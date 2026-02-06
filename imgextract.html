@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Image Extractor Pro</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --tg-bg: #ffffff; --tg-text: #000000; --tg-sec: #707579;
+            --tg-border: #e0e0e0; --tg-blue: #0088cc; --tg-card: #f8f9fa;
+        }
+        [data-theme="dark"] {
+            --tg-bg: #17212b; --tg-text: #e1e3e6; --tg-sec: #a8b2bb;
+            --tg-border: #2c3a48; --tg-card: #232f3d;
+        }
+        body { font-family: -apple-system, sans-serif; background: var(--tg-bg); color: var(--tg-text); margin: 0; padding: 0; transition: 0.3s; }
+        
+        .header {
+            padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--tg-border); background: var(--tg-bg); position: sticky; top: 0; z-index: 100;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo img { width: 32px; height: 32px; border-radius: 5px; }
+        .logo-text { font-weight: bold; font-size: 18px; color: var(--tg-blue); }
+        .profile { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--tg-blue); cursor: pointer; object-fit: cover; }
+
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        
+        /* Input styling with Focus Color */
+        .search-box { position: relative; margin-bottom: 15px; }
+        .search-box i { position: absolute; left: 15px; top: 14px; color: var(--tg-sec); }
+        .search-box input { 
+            width: 100%; padding: 12px 15px 12px 40px; border-radius: 12px; border: 1px solid var(--tg-border); 
+            background: var(--tg-card); color: var(--tg-text); outline: none; transition: 0.3s; box-sizing: border-box;
+        }
+        .search-box input:focus { border-color: var(--tg-blue); box-shadow: 0 0 8px rgba(0, 136, 204, 0.2); }
+
+        .btn-main { background: var(--tg-blue); color: #fff; border: none; padding: 14px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; }
+
+        .image-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 20px; }
+        .image-item { aspect-ratio: 1/1; border-radius: 10px; overflow: hidden; border: 1px solid var(--tg-border); background: var(--tg-card); cursor: pointer; }
+        .image-item img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Fullscreen Modal Logic */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .zoom-container { width: 100%; height: 60vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .modal img { max-width: 100%; max-height: 100%; transition: transform 0.2s; transform: scale(1); }
+        
+        .modal-footer { width: 100%; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .action-row { display: flex; justify-content: center; gap: 10px; width: 100%; }
+        
+        .btn-icon { background: #333; color: #fff; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .btn-dl { background: var(--tg-blue); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: bold; cursor: pointer; flex: 1; font-size: 14px; max-width: 200px; }
+        .btn-copy { background: #444; color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .btn-close { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 25px; cursor: pointer; background: none; border: none; z-index: 10; }
+
+        #loader { display: none; text-align: center; padding: 20px; color: var(--tg-blue); }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+      <div class="logo">
+        <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png" alt="Logo">
+        <div class="logo-text">Basic Touch Pro</div>
+      </div>
+      <img id="profile-pic" class="profile" src="" onclick="window.location.href='tg.html'">
+    </div>
+
+    <div class="container">
+        <h3>Website Image Extractor</h3>
+        <p style="font-size: 14px; color: var(--tg-sec);">Extract images and download them directly to your Telegram.</p>
+
+        <div class="search-box">
+            <i class="fas fa-link"></i>
+            <input type="text" id="siteUrl" placeholder="Enter URL (e.g. https://...)" autocomplete="off">
+        </div>
+        <button class="btn-main" id="extractBtn">EXTRACT IMAGES</button>
+
+        <div id="loader"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+        <div class="image-grid" id="imageGrid"></div>
+    </div>
+
+    <!-- Image Modal -->
+    <div class="modal" id="imageModal">
+        <button class="btn-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+        <div class="zoom-container">
+            <img id="modalImg" src="">
+        </div>
+        
+        <div class="modal-footer">
+            <div class="action-row">
+                <button class="btn-icon" onclick="changeZoom(-0.2)"><i class="fas fa-search-minus"></i></button>
+                <button class="btn-icon" onclick="changeZoom(0.2)"><i class="fas fa-search-plus"></i></button>
+            </div>
+            <div class="action-row">
+                <button class="btn-copy" id="copyLinkBtn"><i class="fas fa-copy"></i> COPY LINK</button>
+                <button class="btn-dl" id="downloadBtn"><i class="fas fa-download"></i> DOWNLOAD</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => window.location.href = "index.html");
+
+        const user = tg.initDataUnsafe.user || {};
+        document.getElementById('profile-pic').src = user.username ? `https://t.me/i/userpic/160/${user.username}.jpg` : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+
+        const extractBtn = document.getElementById('extractBtn');
+        const siteUrl = document.getElementById('siteUrl');
+        const loader = document.getElementById('loader');
+        const imageGrid = document.getElementById('imageGrid');
+
+        let currentImgUrl = "";
+        let currentScale = 1;
+
+        // Fetch Logic
+        extractBtn.onclick = async () => {
+            const url = siteUrl.value.trim();
+            if(!url) return;
+
+            loader.style.display = 'block';
+            imageGrid.innerHTML = '';
+
+            const fd = new FormData();
+            fd.append('extract_url', url);
+
+            try {
+                const res = await fetch(window.location.href, { method: 'POST', body: fd });
+                const data = await res.json();
+                if(data.ok) {
+                    data.images.forEach(src => {
+                        const item = document.createElement('div');
+                        item.className = 'image-item';
+                        item.innerHTML = `<img src="${src}" loading="lazy">`;
+                        item.onclick = () => openModal(src);
+                        imageGrid.appendChild(item);
+                    });
+                } else { tg.showAlert(data.error); }
+            } catch (e) { tg.showAlert("Error loading images!"); }
+            finally { loader.style.display = 'none'; }
+        };
+
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImg');
+
+        function openModal(src) {
+            currentImgUrl = src;
+            currentScale = 1;
+            modalImg.src = src;
+            modalImg.style.transform = `scale(${currentScale})`;
+            modal.style.display = 'flex';
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function closeModal() { modal.style.display = 'none'; }
+        function changeZoom(val) {
+            currentScale = Math.max(0.5, Math.min(3, currentScale + val));
+            modalImg.style.transform = `scale(${currentScale})`;
+        }
+
+        // Copy Image URL Logic
+        document.getElementById('copyLinkBtn').onclick = () => {
+            const temp = document.createElement('textarea');
+            temp.value = currentImgUrl;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            tg.showAlert("Link copied to clipboard! ✅");
+        };
+
+        // Download (Send to Telegram) Logic
+        document.getElementById('downloadBtn').onclick = async () => {
+            const btn = document.getElementById('downloadBtn');
+            btn.disabled = true;
+            btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> SENDING...";
+
+            const fd = new FormData();
+            fd.append('send_image', '1');
+            fd.append('chat_id', user.id || '');
+            fd.append('img_url', currentImgUrl);
+
+            try {
+                const res = await fetch(window.location.href, { method: 'POST', body: fd });
+                const result = await res.json();
+                if(result.ok) {
+                    tg.showAlert("Success! ইমেজটি আপনার টেলিগ্রামে পাঠানো হয়েছে। ✅");
+                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                } else { tg.showAlert("Download failed!"); }
+            } catch(e) { tg.showAlert("Connection error!"); }
+            finally {
+                btn.disabled = false;
+                btn.innerHTML = "<i class='fas fa-download'></i> DOWNLOAD";
+            }
+        };
+
+        document.documentElement.setAttribute('data-theme', tg.colorScheme);
+    </script>
+    
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const AdController = window.Adsgram.init({ blockId: "int-19383" });
+
+        AdController.show().then((result) => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                
+                setTimeout(() => {
+                    window.Telegram.WebApp.showAlert('Thanks for support 💝');
+                }, 200);
+            }
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

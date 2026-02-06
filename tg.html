@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Touch Pro - Profile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+   
+    <style>
+        :root {
+            --telegram-bg: #ffffff;
+            --telegram-text: #000000;
+            --telegram-secondary: #707579;
+            --telegram-card: #ffffff;
+            --telegram-border: #e0e0e0;
+            --telegram-blue: #0088cc;
+            --telegram-green: #2eab5d;
+            --telegram-red: #ff3b30;
+            --telegram-purple: #9b59b6;
+            --telegram-orange: #ff9500;
+            --telegram-light: #ebedf0;
+            --telegram-focus: rgba(0, 136, 204, 0.2);
+        }
+
+        [data-theme="dark"] {
+            --telegram-bg: #17212b;
+            --telegram-text: #e1e3e6;
+            --telegram-secondary: #a8b2bb;
+            --telegram-card: #232f3d;
+            --telegram-border: #2c3a48;
+            --telegram-light: #2b5278;
+            --telegram-focus: rgba(0, 136, 204, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            background-color: var(--telegram-bg);
+            color: var(--telegram-text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+        }
+
+        /* Header Styles */
+        .header {
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--telegram-border);
+            background-color: var(--telegram-card);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo img {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+        }
+
+        .logo-text {
+            font-weight: bold;
+            font-size: 18px;
+            color: var(--telegram-blue);
+        }
+
+        .profile {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            background-color: var(--telegram-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .profile:hover {
+            transform: scale(1.05);
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Profile & Info Styles */
+        .profile-container {
+            width: 100%;
+            background: var(--telegram-card);
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            border: 1px solid var(--telegram-border);
+            margin-bottom: 20px;
+        }
+
+        [data-theme="dark"] .profile-container {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .profile-header {
+            text-align: center;
+        }
+
+        .profile-pic {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 1rem;
+            border: 3px solid var(--telegram-blue);
+        }
+
+        .profile-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--telegram-text);
+        }
+        
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--telegram-text);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--telegram-border);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-group {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--telegram-blue);
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .info-value {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--telegram-bg);
+            border-radius: 8px;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--telegram-border);
+        }
+
+        .info-text {
+            word-break: break-all;
+            font-size: 0.9rem;
+        }
+
+        .info-copy {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--telegram-blue);
+            margin-left: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--telegram-green);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            opacity: 0;
+            transition: opacity 0.3s ease, top 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            top: 40px;
+            opacity: 1;
+        }
+
+        @media (max-width: 600px) {
+            .profile-container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png" alt="Logo">
+            <div class="logo-text">Basic Touch Pro</div>
+        </div>
+        <div id="profile-pic" class="profile"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Profile Section -->
+        <div class="profile-container">
+            <div class="profile-header">
+                <img id="profilePicLarge" class="profile-pic" src="" alt="Profile Picture">
+                <div class="profile-name" id="profileFullName">Loading...</div>
+            </div>
+
+            <div class="info-group">
+                <div class="info-label">Username</div>
+                <div class="info-value">
+                    <span class="info-text" id="profileUsername">N/A</span>
+                    <button class="info-copy" onclick="copyToClipboard('profileUsername')"><i class="far fa-copy"></i></button>
+                </div>
+            </div>
+
+            <div class="info-group">
+                <div class="info-label">User ID</div>
+                <div class="info-value">
+                    <span class="info-text" id="profileUserId">N/A</span>
+                    <button class="info-copy" onclick="copyToClipboard('profileUserId')"><i class="far fa-copy"></i></button>
+                </div>
+            </div>
+
+            <div class="info-group">
+                <div class="info-label">Profile Link</div>
+                <div class="info-value">
+                    <span class="info-text" id="profileLink">N/A</span>
+                    <button class="info-copy" onclick="copyToClipboard('profileLink')"><i class="far fa-copy"></i></button>
+                </div>
+            </div>
+
+            <div class="info-group">
+                <div class="info-label">Language</div>
+                <div class="info-value">
+                    <span class="info-text" id="profileLanguage">N/A</span>
+                    <button class="info-copy" onclick="copyToClipboard('profileLanguage')"><i class="far fa-copy"></i></button>
+                </div>
+            </div>
+
+            <div class="info-group">
+                <div class="info-label">Theme</div>
+                <div class="info-value">
+                    <span class="info-text" id="profileTheme">N/A</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- IP & Network Info Section -->
+        <div class="profile-container">
+            <h2 class="card-title"><i class="fas fa-network-wired"></i> IP & Network Information</h2>
+            
+            <div class="info-group">
+                <div class="info-label">IP Address</div>
+                <div class="info-value">
+                    <span class="info-text" id="ipAddress">Fetching...</span>
+                    <button class="info-copy" onclick="copyToClipboard('ipAddress')"><i class="far fa-copy"></i></button>
+                </div>
+            </div>
+            
+            <div class="info-group">
+                <div class="info-label">Location</div>
+                <div class="info-value">
+                    <span class="info-text" id="ipLocation">Fetching...</span>
+                    <button class="info-copy" onclick="copyToClipboard('ipLocation')"><i class="far fa-copy"></i></button>
+                </div>
+            </div>
+            
+            <div class="info-group">
+                <div class="info-label">ISP / Operator</div>
+                <div class="info-value">
+                    <span class="info-text" id="ipOperator">Fetching...</span>
+                    <button class="info-copy" onclick="copyToClipboard('ipOperator')"><i class="far fa-copy"></i></button>
+                </div>
+            </div>
+
+            <div class="info-group">
+                <div class="info-label">Connection Type</div>
+                <div class="info-value">
+                    <span class="info-text" id="ipConnectionType">Fetching...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <span>Copied to clipboard!</span>
+    </div>
+
+    <script>
+        // --- Global Helper Functions ---
+        const notification = document.getElementById('notification');
+
+        function copyToClipboard(elementId) {
+            const textToCopy = document.getElementById(elementId).textContent;
+            if (textToCopy && textToCopy !== 'N/A' && textToCopy !== 'Fetching...') {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    Telegram.WebApp.showAlert('Copied to clipboard!');
+                }).catch(err => {
+                   Telegram.WebApp.showAlert('Failed to copy!');
+                });
+            }
+        }
+
+        function showNotification(message) {
+            notification.querySelector('span').textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2000);
+        }
+
+        // --- Main Logic ---
+        document.addEventListener('DOMContentLoaded', function() {
+            const tg = window.Telegram.WebApp;
+            
+            if (!tg) {
+                console.error("Telegram WebApp script not loaded.");
+                return;
+            }
+
+            tg.ready();
+
+            // --- UI & Theme ---
+            tg.BackButton.show();
+            tg.BackButton.onClick(() => {
+                window.location.href = "index.html"; // Redirects to PHP index
+            });
+            
+            function updateTheme() {
+                const theme = tg.colorScheme === 'dark' ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', theme);
+                document.getElementById('profileTheme').textContent = theme.charAt(0).toUpperCase() + theme.slice(1);
+            }
+            
+            updateTheme();
+            tg.onEvent('themeChanged', updateTheme);
+
+            // --- Load User Profile Data ---
+            function loadUserProfile() {
+                const user = tg.initDataUnsafe?.user || {};
+                const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Telegram User';
+                const username = user.username || 'N/A';
+                
+                // Set Profile Pictures (Header and Large)
+                const profilePicHeader = document.getElementById('profile-pic');
+                const profilePicLarge = document.getElementById('profilePicLarge');
+                
+                if (user.photo_url) {
+                    profilePicHeader.innerHTML = `<img src="${user.photo_url}" alt="Profile" style="width:100%; height:100%; object-fit:cover;">`;
+                    profilePicLarge.src = user.photo_url;
+                } else {
+                    const initial = fullName.charAt(0).toUpperCase();
+                    const color = getRandomColor();
+                    profilePicHeader.textContent = initial;
+                    profilePicHeader.style.backgroundColor = color;
+                    profilePicLarge.style.display = 'none'; // Hide image tag if no photo
+                }
+
+                // Set Profile Info
+                document.getElementById('profileFullName').textContent = fullName;
+                document.getElementById('profileUsername').textContent = username;
+                document.getElementById('profileUserId').textContent = user.id ? user.id.toString() : 'N/A';
+                document.getElementById('profileLink').textContent = username !== 'N/A' ? `https://t.me/${username}` : 'N/A';
+                document.getElementById('profileLanguage').textContent = user.language_code || 'N/A';
+            }
+            
+            // --- Securely Load IP Information (via PHP Proxy) ---
+            async function loadIpInfo() {
+                try {
+                    // SECURE CHANGE: We call the current page (PHP) which proxies the request.
+                    // This hides the API provider URL from the client source code.
+                    const response = await fetch(window.location.href, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ action: 'get_ip_info' })
+                    });
+
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    const data = await response.json();
+
+                    document.getElementById('ipAddress').textContent = data.ip || 'N/A';
+                    document.getElementById('ipLocation').textContent = `${data.city || ''}, ${data.region || ''}, ${data.country || ''}`;
+                    document.getElementById('ipOperator').textContent = data.org || 'N/A';
+
+                    // Determine connection type based on ISP name
+                    let connectionType = "Broadband / Wi-Fi";
+                    const mobileKeywords = ['mobile', 'lte', 'grameenphone', 'banglalink', 'robi', 'airtel', 'teletalk', 'communications'];
+                    if (data.org && mobileKeywords.some(keyword => data.org.toLowerCase().includes(keyword))) {
+                        connectionType = "Mobile Network";
+                    }
+                    document.getElementById('ipConnectionType').textContent = connectionType;
+
+                } catch (error) {
+                    console.error("Failed to fetch IP info:", error);
+                    document.getElementById('ipAddress').textContent = 'Unavailable';
+                    document.getElementById('ipLocation').textContent = 'Unavailable';
+                    document.getElementById('ipOperator').textContent = 'Unavailable';
+                    document.getElementById('ipConnectionType').textContent = 'Unavailable';
+                }
+            }
+            
+            function getRandomColor() {
+                const colors = ['#FF6584', '#4D44DB', '#6C63FF', '#0088cc', '#2eab5d', '#ff3b30', '#9b59b6', '#ff9500'];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            // --- Initial Load ---
+            loadUserProfile();
+            loadIpInfo();
+        });
+    </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

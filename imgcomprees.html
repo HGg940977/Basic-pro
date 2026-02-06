@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Compressor - @BasicTouchPro</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --tg-bg: #ffffff; --tg-text: #000000; --tg-sec: #707579;
+            --tg-border: #e0e0e0; --tg-blue: #0088cc; --tg-card: #f8f9fa;
+            --tg-green: #28a745;
+        }
+        [data-theme="dark"] {
+            --tg-bg: #17212b; --tg-text: #e1e3e6; --tg-sec: #a8b2bb;
+            --tg-border: #2c3a48; --tg-card: #232f3d;
+        }
+        body { font-family: -apple-system, sans-serif; background: var(--tg-bg); color: var(--tg-text); margin: 0; padding: 0; overflow-x: hidden; }
+        
+        .header {
+            padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--tg-border); background: var(--tg-bg); position: sticky; top:0; z-index:100;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo img { width: 32px; height: 32px; border-radius: 5px; }
+        .logo-text { font-weight: bold; font-size: 18px; color: var(--tg-blue); }
+        .profile { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--tg-blue); cursor: pointer; object-fit: cover; }
+
+        .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+        
+        .upload-area {
+            border: 2px dashed var(--tg-border); border-radius: 15px; padding: 30px;
+            text-align: center; cursor: pointer; transition: 0.3s; background: var(--tg-card);
+        }
+        .upload-area:hover, .upload-area.dragover { border-color: var(--tg-blue); background: rgba(0, 136, 204, 0.05); }
+        .upload-area i { font-size: 40px; color: var(--tg-blue); margin-bottom: 10px; }
+
+        .card { background: var(--tg-card); border-radius: 15px; padding: 20px; border: 1px solid var(--tg-border); margin-top: 15px; display: none; }
+        .size-info { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 15px; color: var(--tg-sec); }
+
+        /* Slider Styling */
+        input[type=range] { width: 100%; margin: 15px 0; cursor: pointer; }
+        
+        .preview-img { width: 100%; border-radius: 10px; margin-top: 10px; border: 1px solid var(--tg-border); }
+
+        .btn-dl { background: var(--tg-blue); color: #fff; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-dl:active { transform: scale(0.98); }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+      <div class="logo">
+        <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png">
+        <div class="logo-text">Basic Touch Pro</div>
+      </div>
+      <img id="profile-pic" class="profile" src="" onclick="window.location.href='tg.html'">
+    </div>
+
+    <div class="container">
+        <h3><i class="fas fa-compress-arrows-alt"></i> Image Compressor</h3>
+        
+        <!-- Step 1: Upload -->
+        <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <i class="fas fa-file-image"></i>
+            <p style="font-weight: bold;">Click or Drag Image to Compress</p>
+            <input type="file" id="fileInput" accept="image/*" style="display:none">
+        </div>
+
+        <!-- Step 2: Controls -->
+        <div class="card" id="controlPanel">
+            <div class="size-info">
+                <span>Original: <span id="origSizeText">0 KB</span></span>
+                <span style="color: var(--tg-blue);">New: <span id="newSizeText">0 KB</span></span>
+            </div>
+
+            <label style="font-size: 12px; font-weight: bold;">Compression Quality: <span id="qualLabel">80</span>%</label>
+            <input type="range" id="qualitySlider" min="5" max="100" value="80">
+
+            <img id="previewImage" class="preview-img" src="">
+
+            <button class="btn-dl" id="downloadBtn">
+                <i class="fab fa-telegram-plane"></i> DOWNLOAD
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => window.location.href = "index.html");
+
+        const user = tg.initDataUnsafe.user || {};
+        document.getElementById('profile-pic').src = user.username ? `https://t.me/i/userpic/160/${user.username}.jpg` : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+        document.documentElement.setAttribute('data-theme', tg.colorScheme);
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const controlPanel = document.getElementById('controlPanel');
+        const qualitySlider = document.getElementById('qualitySlider');
+        const qualLabel = document.getElementById('qualLabel');
+        const previewImage = document.getElementById('previewImage');
+
+        let originalFile = null;
+        let compressedBase64 = "";
+
+        fileInput.onchange = (e) => handleFile(e.target.files[0]);
+        ['dragover', 'dragenter'].forEach(e => dropZone.addEventListener(e, (ev) => { ev.preventDefault(); dropZone.classList.add('dragover'); }));
+        ['dragleave', 'drop'].forEach(e => dropZone.addEventListener(e, (ev) => { ev.preventDefault(); dropZone.classList.remove('dragover'); }));
+        dropZone.addEventListener('drop', (e) => handleFile(e.dataTransfer.files[0]));
+
+        function handleFile(file) {
+            if (!file || !file.type.startsWith('image/')) return;
+            originalFile = file;
+            document.getElementById('origSizeText').innerText = formatSize(file.size);
+            
+            controlPanel.style.display = 'block';
+            dropZone.style.display = 'none';
+            compressImage();
+        }
+
+        qualitySlider.oninput = () => {
+            qualLabel.innerText = qualitySlider.value;
+            compressImage();
+        };
+
+        function compressImage() {
+            const reader = new FileReader();
+            reader.readAsDataURL(originalFile);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    const quality = qualitySlider.value / 100;
+                    compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+                    
+                    previewImage.src = compressedBase64;
+                    
+                    // Estimate size
+                    const head = 'data:image/jpeg;base64,'.length;
+                    const sizeInBytes = Math.round((compressedBase64.length - head) * 3 / 4);
+                    document.getElementById('newSizeText').innerText = formatSize(sizeInBytes);
+                };
+            };
+        }
+
+        function formatSize(bytes) {
+            if (bytes >= 1048576) return (bytes / 1048576).toFixed(2) + ' MB';
+            return (bytes / 1024).toFixed(2) + ' KB';
+        }
+
+        document.getElementById('downloadBtn').onclick = async () => {
+            const btn = document.getElementById('downloadBtn');
+            btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> SENDING...";
+            btn.disabled = true;
+
+            const fd = new FormData();
+            fd.append('action', 'send_compressed');
+            fd.append('chat_id', user.id || '');
+            fd.append('image_data', compressedBase64);
+            fd.append('orig_size', document.getElementById('origSizeText').innerText);
+            fd.append('comp_size', document.getElementById('newSizeText').innerText);
+
+            try {
+                const res = await fetch(window.location.href, { method: 'POST', body: fd });
+                const data = await res.json();
+                if(data.ok) {
+                    tg.showAlert("✅ Image sent to your Telegram! Page refreshing...", () => {
+                        location.reload();
+                    });
+                }
+            } catch(e) {
+                tg.showAlert("❌ Connection error!");
+                btn.disabled = false;
+                btn.innerHTML = "DOWNLOAD";
+            }
+        };
+    </script>
+    
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const AdController = window.Adsgram.init({ blockId: "int-19383" });
+
+        AdController.show().then((result) => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                
+                setTimeout(() => {
+                    window.Telegram.WebApp.showAlert('Thanks for support 💝');
+                }, 200);
+            }
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

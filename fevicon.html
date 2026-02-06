@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Favicon Generator Pro</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+          --telegram-bg: #ffffff;
+          --telegram-text: #000000;
+          --telegram-secondary: #707579;
+          --telegram-card: #ffffff;
+          --telegram-border: #e0e0e0;
+          --telegram-blue: #0088cc;
+          --telegram-light: #ebedf0;
+        }
+        [data-theme="dark"] {
+          --telegram-bg: #17212b;
+          --telegram-text: #e1e3e6;
+          --telegram-secondary: #a8b2bb;
+          --telegram-card: #232f3d;
+          --telegram-border: #2c3a48;
+          --telegram-light: #2b5278;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0; padding: 0;
+            background-color: var(--telegram-bg);
+            color: var(--telegram-text);
+            transition: all 0.3s ease;
+        }
+        .header {
+          padding: 15px; display: flex; justify-content: space-between; align-items: center;
+          border-bottom: 1px solid var(--telegram-border); background-color: var(--telegram-card);
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo img { width: 30px; height: 30px; }
+        .logo-text { font-weight: bold; font-size: 18px; color: var(--telegram-blue); }
+        .profile { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; text-align: center; }
+        .upload-area {
+            border: 2px dashed var(--telegram-border);
+            border-radius: 15px; padding: 50px 20px;
+            cursor: pointer; transition: 0.3s;
+            background: var(--telegram-card); margin-top: 20px;
+        }
+        .upload-area:hover { border-color: var(--telegram-blue); background: var(--telegram-light); }
+        .upload-area.dragover { border-color: var(--telegram-blue); transform: scale(1.02); }
+        .upload-icon { font-size: 60px; color: var(--telegram-blue); margin-bottom: 15px; }
+        .info-card {
+            background: var(--telegram-light); padding: 15px; border-radius: 10px;
+            font-size: 13px; text-align: left; margin-top: 20px; line-height: 1.8;
+        }
+        #loader {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8); display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+            z-index: 1000; color: white;
+        }
+        .spinner { font-size: 40px; animation: spin 1s linear infinite; color: var(--telegram-blue); }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="header">
+      <div class="logo">
+        <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png" alt="Logo">
+        <div class="logo-text">Basic Touch Pro</div>
+      </div>
+      <img id="profile-pic" class="profile" src="" alt="Profile" onclick="window.location.href='tg.html'">
+    </div>
+
+    <div class="container">
+        <h3>Favicon Pack Generator</h3>
+        <p style="color: var(--telegram-secondary);">Create modern PWA icons for Android, iOS, and Web.</p>
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon"><i class="fas fa-images"></i></div>
+            <strong>Select or Drag PNG Image</strong>
+            <input type="file" id="fileInput" accept="image/png" style="display: none;">
+        </div>
+        <div class="info-card">
+            <strong><i class="fas fa-check-circle"></i> This pack includes:</strong><br>
+            • android-chrome-512x512.png<br>
+            • android-chrome-192x192.png<br>
+            • apple-touch-icon.png (180x180)<br>
+            • favicon-32x32.png & 16x16.png<br>
+            • site.webmanifest (PWA Standard)
+        </div>
+    </div>
+
+    <div id="loader">
+        <i class="fas fa-spinner spinner"></i>
+        <p style="margin-top: 15px;">Processing Image...</p>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => window.location.href = "index.html");
+
+        function applyTheme() {
+            document.documentElement.setAttribute('data-theme', tg.colorScheme);
+        }
+        tg.onEvent('themeChanged', applyTheme);
+        applyTheme();
+
+        const user = tg.initDataUnsafe.user || {};
+        document.getElementById('profile-pic').src = user.username ? `https://t.me/i/userpic/160/${user.username}.jpg` : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const loader = document.getElementById('loader');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        ['dragenter', 'dragover'].forEach(e => {
+            uploadArea.addEventListener(e, (ev) => {
+                ev.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(e => {
+            uploadArea.addEventListener(e, (ev) => {
+                ev.preventDefault();
+                uploadArea.classList.remove('dragover');
+                if(e === 'drop') {
+                    const files = ev.dataTransfer.files;
+                    if(files.length) handleUpload(files[0]);
+                }
+            });
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if(e.target.files.length) handleUpload(e.target.files[0]);
+        });
+
+        async function handleUpload(file) {
+            if (file.type !== "image/png") {
+                tg.showAlert("Please upload a PNG image!");
+                return;
+            }
+
+            loader.style.display = 'flex';
+            const formData = new FormData();
+            formData.append('image_file', file);
+            formData.append('chat_id', user.id || '');
+
+            try {
+                const response = await fetch(window.location.pathname, {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+
+                if (result.ok) {
+                    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
+                    tg.showAlert("Favicon pack sent to Telegram! ✅", () => {
+                        tg.close();
+                    });
+                } else {
+                    tg.showAlert("Process failed. Please try again.");
+                }
+            } catch (err) {
+                tg.showAlert("Network Error.");
+            } finally {
+                loader.style.display = 'none';
+                fileInput.value = '';
+            }
+        }
+    </script>
+    
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const AdController = window.Adsgram.init({ blockId: "int-19383" });
+
+        AdController.show().then((result) => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                
+                setTimeout(() => {
+                    window.Telegram.WebApp.showAlert('Thanks for support 💝');
+                }, 200);
+            }
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

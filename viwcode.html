@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Source Viewer Pro</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+   
+    <style>
+        :root {
+          --telegram-bg: #ffffff;
+          --telegram-text: #000000;
+          --telegram-secondary: #707579;
+          --telegram-card: #ffffff;
+          --telegram-border: #e0e0e0;
+          --telegram-blue: #0088cc;
+          --telegram-green: #2eab5d;
+        }
+        [data-theme="dark"] {
+          --telegram-bg: #17212b;
+          --telegram-text: #e1e3e6;
+          --telegram-secondary: #a8b2bb;
+          --telegram-card: #232f3d;
+          --telegram-border: #2c3a48;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0; padding: 0;
+            background-color: var(--telegram-bg);
+            color: var(--telegram-text);
+        }
+
+        .header {
+          padding: 15px; display: flex; justify-content: space-between; align-items: center;
+          border-bottom: 1px solid var(--telegram-border); background-color: var(--telegram-card);
+          position: sticky; top: 0; z-index: 100;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo img { width: 30px; height: 30px; }
+        .logo-text { font-weight: bold; font-size: 18px; color: var(--telegram-blue); }
+        .profile { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--telegram-blue); cursor: pointer; }
+
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+
+        .input-box {
+            background: var(--telegram-card);
+            border: 1px solid var(--telegram-border);
+            padding: 20px; border-radius: 12px;
+            text-align: center; margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%; padding: 12px; border-radius: 8px;
+            border: 1px solid var(--telegram-border);
+            background: var(--telegram-bg); color: var(--telegram-text);
+            box-sizing: border-box; font-size: 16px;
+        }
+        input:focus { border-color: var(--telegram-blue); outline: none; }
+
+        .action-btn {
+            background: var(--telegram-blue); color: white; border: none;
+            padding: 12px 20px; border-radius: 8px; margin-top: 15px;
+            width: 100%; font-weight: bold; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; gap: 8px;
+        }
+
+        /* Result Area Customization */
+        #resultArea { display: none; margin-top: 20px; }
+        .code-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 8px; font-weight: bold; font-size: 14px;
+        }
+        .code-container {
+            background: #1e1e1e; color: #d4d4d4;
+            padding: 15px; border-radius: 10px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px; max-height: 400px;
+            overflow: auto; white-space: pre;
+            border: 1px solid #333;
+            line-height: 1.5;
+            user-select: text;
+        }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .download-btn { background: var(--telegram-green); flex: 2; }
+        .copy-btn { background: #555; flex: 1; }
+
+        #loader {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8); display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+            z-index: 1000; color: white;
+        }
+        .spinner { font-size: 40px; animation: spin 1s linear infinite; color: var(--telegram-blue); }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+      <div class="logo">
+        <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png" alt="Logo">
+        <div class="logo-text">Basic Touch Pro</div>
+      </div>
+      <img id="profile-pic" class="profile" src="" alt="Profile" onclick="window.location.href='tg.html'">
+    </div>
+
+    <div class="container">
+        <div class="input-box">
+            <input type="text" id="urlInput" placeholder="Enter URL (e.g. https://google.com)">
+            <button class="action-btn" onclick="fetchSource()">
+                <i class="fas fa-search"></i> Get Full Source Code
+            </button>
+        </div>
+
+        <div id="resultArea">
+            <div class="code-header">
+                <span><i class="fas fa-file-code"></i> Source Preview</span>
+                <span id="charCount" style="font-weight: normal; font-size: 11px; opacity: 0.7;"></span>
+            </div>
+            <div class="code-container" id="codePreview"></div>
+            
+            <div class="btn-group">
+                <button class="action-btn copy-btn" onclick="copyCode()">
+                    <i class="fas fa-copy"></i> Copy
+                </button>
+                <button class="action-btn download-btn" onclick="sendToTelegram()">
+                    <i class="fas fa-paper-plane"></i> Send to Telegram
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loader">
+        <i class="fas fa-spinner spinner"></i>
+        <p id="loaderText" style="margin-top: 10px;">Fetching Source...</p>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => { window.location.href = "index.html"; });
+
+        function applyTheme() { document.documentElement.setAttribute('data-theme', tg.colorScheme); }
+        tg.onEvent('themeChanged', applyTheme);
+        applyTheme();
+
+        const user = tg.initDataUnsafe.user || {};
+        document.getElementById('profile-pic').src = user.username ? `https://t.me/i/userpic/160/${user.username}.jpg` : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+
+        let currentSource = "";
+
+        async function fetchSource() {
+            let url = document.getElementById('urlInput').value.trim();
+            if (!url) { tg.showAlert("Please enter a URL!"); return; }
+            if (!url.startsWith('http')) url = 'https://' + url;
+
+            document.getElementById('loader').style.display = 'flex';
+            document.getElementById('resultArea').style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('action', 'fetch_source');
+            formData.append('url', url);
+
+            try {
+                const response = await fetch(window.location.href, { method: 'POST', body: formData });
+                const data = await response.json();
+
+                if (data.ok) {
+                    currentSource = data.source;
+                    // এখানে সম্পূর্ণ সোর্স কোড ইনজেক্ট করা হচ্ছে
+                    const preview = document.getElementById('codePreview');
+                    preview.innerText = currentSource; 
+                    
+                    document.getElementById('charCount').innerText = currentSource.length.toLocaleString() + " characters";
+                    document.getElementById('resultArea').style.display = 'block';
+                } else {
+                    tg.showAlert(data.error);
+                }
+            } catch (err) {
+                tg.showAlert("Request failed. Please try again.");
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+            }
+        }
+
+        async function sendToTelegram() {
+            const url = document.getElementById('urlInput').value.trim();
+            if (!currentSource) return;
+
+            document.getElementById('loaderText').innerText = "Uploading to Telegram...";
+            document.getElementById('loader').style.display = 'flex';
+
+            const formData = new FormData();
+            formData.append('action', 'send_to_tg');
+            formData.append('chat_id', user.id || '');
+            formData.append('source_code', currentSource);
+            formData.append('site_url', url);
+
+            try {
+                const response = await fetch(window.location.href, { method: 'POST', body: formData });
+                const data = await response.json();
+                if (data.ok) {
+                 tg.showAlert("Full Source Code file sent to your Telegram! ✅", function () {
+                  window.location.href = "index.html";
+                  });
+              } else {
+                    tg.showAlert("Telegram delivery failed.");
+                }
+            } catch (err) {
+                tg.showAlert("Error connecting to server.");
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('loaderText').innerText = "Fetching Source...";
+            }
+        }
+
+              function copyCode() {
+              if (!currentSource) return;
+
+           navigator.clipboard.writeText(currentSource).then(() => {
+                tg.showAlert("Full source code copied to clipboard! ✅", function () {
+                window.location.href = "index.html"; 
+              });
+             });
+           }
+
+    </script>
+      
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const AdController = window.Adsgram.init({ blockId: "int-19383" });
+
+        AdController.show().then((result) => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                
+                setTimeout(() => {
+                    window.Telegram.WebApp.showAlert('Thanks for support 💝');
+                }, 200);
+            }
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

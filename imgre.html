@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Resizer</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Secure Ad Script Injection -->
+    <script src="https://ad.gigapub.tech/script?id=1830"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+          --telegram-bg: #ffffff;
+          --telegram-text: #000000;
+          --telegram-secondary: #707579;
+          --telegram-card: #ffffff;
+          --telegram-border: #e0e0e0;
+          --telegram-blue: #0088cc;
+          --telegram-green: #2eab5d;
+          --telegram-red: #ff3b30;
+          --telegram-light: #ebedf0;
+          --telegram-focus: rgba(0, 136, 204, 0.3);
+        }
+
+        [data-theme="dark"] {
+          --telegram-bg: #17212b;
+          --telegram-text: #e1e3e6;
+          --telegram-secondary: #a8b2bb;
+          --telegram-card: #232f3d;
+          --telegram-border: #2c3a48;
+          --telegram-light: #2b5278;
+          --telegram-focus: rgba(0, 136, 204, 0.5);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--telegram-bg);
+            color: var(--telegram-text);
+            transition: all 0.3s ease;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* Header Styles */
+        .header {
+          padding: 15px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid var(--telegram-border);
+          background-color: var(--telegram-card);
+        }
+
+        .logo {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .logo img {
+          width: 30px;
+          height: 30px;
+        }
+
+        .logo-text {
+          font-weight: bold;
+          font-size: 18px;
+          color: var(--telegram-blue);
+        }
+
+        .profile {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          object-fit: cover;
+          cursor: pointer;
+          transition: transform 0.3s ease;
+        }
+
+        .profile:hover {
+          transform: scale(1.1);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--telegram-border);
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: var(--telegram-blue);
+            background-color: var(--telegram-light);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: var(--telegram-blue);
+            margin-bottom: 10px;
+        }
+
+        .image-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+
+        /* Overlay to prevent long press on image */
+        .image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: calc(100% - 35px); /* Adjust for dimensions info */
+            z-index: 1;
+        }
+
+        .dimensions-info {
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: var(--telegram-secondary);
+        }
+
+        .resize-controls {
+            display: none;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .dimension-input {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .dimension-input label {
+            width: 80px;
+            font-weight: 500;
+        }
+
+        .dimension-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--telegram-border);
+            border-radius: 6px;
+            font-size: 15px;
+            background-color: var(--telegram-card);
+            color: var(--telegram-text);
+            transition: box-shadow 0.2s ease;
+        }
+
+        /* Focus style for input boxes */
+        .dimension-input input:focus {
+            outline: none;
+            border-color: var(--telegram-blue);
+            box-shadow: 0 0 0 3px var(--telegram-focus);
+        }
+
+        .aspect-ratio {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .aspect-ratio input {
+            margin-right: 10px;
+        }
+
+        .resize-btn {
+            background-color: var(--telegram-blue);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+
+        .resize-btn:hover {
+            background-color: var(--telegram-light);
+        }
+
+        .download-btn {
+            background-color: var(--telegram-green);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .download-btn:hover {
+            background-color: #2a9554;
+        }
+
+        /* Loading and success states */
+        .download-btn .spinner {
+            display: none;
+            animation: spin 1s linear infinite;
+        }
+
+        .download-btn .success-icon {
+            display: none;
+        }
+
+        .download-btn.sending .button-text,
+        .download-btn.sending .download-icon {
+            display: none;
+        }
+
+        .download-btn.sending .spinner {
+            display: block;
+        }
+
+        .download-btn.success .button-text,
+        .download-btn.success .download-icon {
+            display: none;
+        }
+
+        .download-btn.success .success-icon {
+            display: block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Progress bar */
+        .progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background-color: rgba(255, 255, 255, 0.3);
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0;
+            background-color: white;
+            transition: width 0.3s ease;
+        }
+
+        .error {
+            color: var(--telegram-red);
+            text-align: center;
+            margin: 15px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+      <div class="logo">
+        <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png" alt="Logo">
+        <div class="logo-text">Basic Touch Pro</div>
+      </div>
+      <img id="profile-pic" class="profile" src="" alt="Profile" onclick="goToPage('tg.index')">
+    </div>
+
+    <div class="container">
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon"><i class="fas fa-images"></i></div>
+            <h3>Select Image</h3>
+            <p>Choose an image to resize</p>
+            <input type="file" id="fileInput" accept="image/*" style="display: none;">
+        </div>
+
+        <div class="image-container" id="imageContainer">
+            <div class="image-overlay"></div>
+            <img id="imagePreview" class="image-preview" alt="Preview">
+            <div class="dimensions-info" id="dimensionsInfo"></div>
+        </div>
+
+        <div class="resize-controls" id="resizeControls">
+            <div class="dimension-input">
+                <label for="widthInput">Width:</label>
+                <input type="number" id="widthInput" placeholder="Enter width in pixels">
+            </div>
+            <div class="dimension-input">
+                <label for="heightInput">Height:</label>
+                <input type="number" id="heightInput" placeholder="Enter height in pixels">
+            </div>
+            <div class="aspect-ratio">
+                <input type="checkbox" id="lockAspect" checked>
+                <label for="lockAspect">Maintain aspect ratio</label>
+            </div>
+            <button id="resizeBtn" class="resize-btn">
+                <i class="fas fa-expand"></i> Resize Image
+            </button>
+        </div>
+
+        <button id="downloadBtn" class="download-btn">
+            <i class="fas fa-download download-icon"></i>
+            <span class="button-text">Download Image</span>
+            <i class="fas fa-spinner spinner"></i>
+            <i class="fas fa-check success-icon"></i>
+            <div class="progress-bar">
+                <div class="progress-bar-fill"></div>
+            </div>
+        </button>
+
+        <div class="error" id="errorMessage"></div>
+    </div>
+
+    <script>
+        // Telegram WebApp Setup
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+
+        // Set theme
+        const tgTheme = Telegram.WebApp.colorScheme || 'light';
+        document.documentElement.setAttribute('data-theme', tgTheme);
+
+        // Listen for theme changes
+        Telegram.WebApp.onEvent('themeChanged', () => {
+            document.documentElement.setAttribute('data-theme', Telegram.WebApp.colorScheme);
+        });
+
+        // Back button handling
+        Telegram.WebApp.BackButton.show();
+        Telegram.WebApp.BackButton.onClick(() => {
+            window.location.href = "index.index"; // Pointing to the PHP index
+        });
+
+        // Get user info
+        const user = Telegram.WebApp.initDataUnsafe.user || {};
+        const username = user.username || 'user';
+        const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Telegram User';
+        const profilePicUrl = `https://t.me/i/userpic/320/${username}.jpg`;
+
+        // Set profile picture
+        document.getElementById('profile-pic').src = profilePicUrl;
+
+        // Navigation function
+        function goToPage(page) {
+            window.location.href = page;
+        }
+
+        // DOM elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const imageContainer = document.getElementById('imageContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const dimensionsInfo = document.getElementById('dimensionsInfo');
+        const resizeControls = document.getElementById('resizeControls');
+        const widthInput = document.getElementById('widthInput');
+        const heightInput = document.getElementById('heightInput');
+        const lockAspect = document.getElementById('lockAspect');
+        const resizeBtn = document.getElementById('resizeBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const progressBarFill = document.querySelector('.progress-bar-fill');
+
+        // Variables
+        let originalImage = null;
+        let originalWidth = 0;
+        let originalHeight = 0;
+        let aspectRatio = 1;
+        let resizedImageBlob = null;
+
+        // Event listeners
+        uploadArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleImageSelect);
+        lockAspect.addEventListener('change', toggleAspectRatioLock);
+        widthInput.addEventListener('input', updateDimensions);
+        heightInput.addEventListener('input', updateDimensions);
+        resizeBtn.addEventListener('click', resizeImage);
+        downloadBtn.addEventListener('click', sendToTelegram);
+
+        function handleImageSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!file.type.match('image.*')) {
+                showError('Please select a valid image file');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                originalImage = new Image();
+                originalImage.onload = function() {
+                    originalWidth = this.width;
+                    originalHeight = this.height;
+                    aspectRatio = originalWidth / originalHeight;
+
+                    // Display original image
+                    imagePreview.src = event.target.result;
+                    dimensionsInfo.textContent = `Original dimensions: ${originalWidth} × ${originalHeight} pixels`;
+                    
+                    // Set initial resize values
+                    widthInput.value = originalWidth;
+                    heightInput.value = originalHeight;
+
+                    // Show UI elements
+                    imageContainer.style.display = 'flex';
+                    resizeControls.style.display = 'block';
+                    uploadArea.style.display = 'none';
+                    errorMessage.style.display = 'none';
+                };
+                originalImage.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function toggleAspectRatioLock() {
+            if (lockAspect.checked) {
+                aspectRatio = originalWidth / originalHeight;
+                updateDimensions();
+            }
+        }
+
+        function updateDimensions() {
+            if (!lockAspect.checked) return;
+
+            if (this === widthInput) {
+                heightInput.value = Math.round(widthInput.value / aspectRatio);
+            } else if (this === heightInput) {
+                widthInput.value = Math.round(heightInput.value * aspectRatio);
+            }
+        }
+
+        function resizeImage() {
+            const newWidth = parseInt(widthInput.value);
+            const newHeight = parseInt(heightInput.value);
+
+            if (isNaN(newWidth)) {
+                showError('Please enter a valid width');
+                return;
+            }
+
+            if (isNaN(newHeight)) {
+                showError('Please enter a valid height');
+                return;
+            }
+
+            // Create canvas for resizing
+            const canvas = document.createElement('canvas');
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(originalImage, 0, 0, newWidth, newHeight);
+
+            // Update preview
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                imagePreview.src = url;
+                dimensionsInfo.textContent = `Original: ${originalWidth} × ${originalHeight} | Resized: ${newWidth} × ${newHeight} pixels`;
+                resizedImageBlob = blob;
+                downloadBtn.style.display = 'flex';
+            }, 'image/jpeg', 0.9);
+        }
+
+        function sendToTelegram() {
+            if (!resizedImageBlob) {
+                showError('No resized image available');
+                return;
+            }
+
+            const userId = user.id;
+            if (!userId) {
+                showError('Unable to get your Telegram user ID');
+                return;
+            }
+
+            // Set loading state
+            downloadBtn.classList.add('sending');
+            progressBarFill.style.width = '30%';
+
+            const formData = new FormData();
+            formData.append('chat_id', userId);
+            formData.append('document', new File([resizedImageBlob], 'resized_image.jpg'));
+            formData.append('caption', `${fullName}, your resized image (${widthInput.value}×${heightInput.value})`);
+
+            // Simulate progress
+            const progressInterval = setInterval(() => {
+                const currentWidth = parseInt(progressBarFill.style.width) || 30;
+                if (currentWidth < 90) {
+                    progressBarFill.style.width = (currentWidth + 10) + '%';
+                }
+            }, 300);
+
+            // SECURE CHANGE: We now post to this PHP file instead of api.telegram.org directly
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                clearInterval(progressInterval);
+                progressBarFill.style.width = '100%';
+                
+                if (data.ok) {
+                    // Show success state
+                    downloadBtn.classList.remove('sending');
+                    downloadBtn.classList.add('success');
+                    
+                    setTimeout(() => {
+                        Telegram.WebApp.showAlert('Image resized and sent successfully! ✅', () => {
+                            Telegram.WebApp.close();
+                        });
+                    }, 1000);
+                } else {
+                    throw new Error(data.description || 'Failed to send image');
+                }
+            })
+            .catch(error => {
+                clearInterval(progressInterval);
+                downloadBtn.classList.remove('sending');
+                progressBarFill.style.width = '0';
+                showError('Failed to send image: ' + error.message);
+            });
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            setTimeout(() => errorMessage.style.display = 'none', 3000);
+        }
+    </script>
+    
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const AdController = window.Adsgram.init({ blockId: "int-19383" });
+
+        AdController.show().then((result) => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                
+                setTimeout(() => {
+                    window.Telegram.WebApp.showAlert('Thanks for support 💝');
+                }, 200);
+            }
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

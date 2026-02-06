@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Automation - @BasicTouchPro</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+          --tg-bg: #ffffff; --tg-text: #000000; --tg-sec: #707579;
+          --tg-border: #e0e0e0; --tg-blue: #0088cc; --tg-card: #f8f9fa;
+        }
+        [data-theme="dark"] {
+          --tg-bg: #17212b; --tg-text: #e1e3e6; --tg-sec: #a8b2bb;
+          --tg-border: #2c3a48; --tg-card: #232f3d;
+        }
+        body { font-family: -apple-system, sans-serif; background: var(--tg-bg); color: var(--tg-text); margin: 0; padding: 0; transition: 0.3s; }
+        
+        .header {
+          padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;
+          border-bottom: 1px solid var(--tg-border); background: var(--tg-bg); position: sticky; top: 0; z-index: 10;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo img { width: 32px; height: 32px; border-radius: 5px; }
+        .logo-text { font-weight: bold; font-size: 18px; color: var(--tg-blue); }
+        .profile { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--tg-blue); object-fit: cover; cursor: pointer; }
+
+        .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+        
+        .input-group { margin-bottom: 15px; text-align: left; }
+        label { font-size: 13px; color: var(--tg-sec); margin-left: 5px; font-weight: 500; }
+        input[type="text"] {
+            width: 100%; padding: 12px; margin-top: 5px; border-radius: 10px;
+            border: 1px solid var(--tg-border); background: var(--tg-card);
+            color: var(--tg-text); outline: none; transition: 0.2s; box-sizing: border-box;
+        }
+        input[type="text"]:focus { border-color: var(--tg-blue); box-shadow: 0 0 5px rgba(0, 136, 204, 0.2); }
+
+        .upload-area {
+            border: 2px dashed var(--tg-blue); border-radius: 15px; padding: 30px 15px;
+            text-align: center; cursor: pointer; background: var(--tg-card); margin-top: 10px;
+            position: relative; overflow: hidden;
+        }
+        #imagePreview { max-width: 100px; max-height: 100px; display: none; margin: 0 auto 10px; border-radius: 10px; }
+        
+        .btn {
+            background: var(--tg-blue); color: #fff; border: none; padding: 14px;
+            width: 100%; border-radius: 10px; font-weight: bold; font-size: 16px;
+            cursor: pointer; margin-top: 20px; box-shadow: 0 4px 10px rgba(0, 136, 204, 0.3);
+        }
+        
+        #loader {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 1000; color: white;
+        }
+        .fa-spin { font-size: 40px; margin-bottom: 10px; color: var(--tg-blue); }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+      <div class="logo">
+        <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png" alt="Logo">
+        <div class="logo-text">Basic Touch Pro</div>
+      </div>
+      <img id="profile-pic" class="profile" src="" alt="User" onclick="window.location.href='tg.html'">
+    </div>
+
+    <div class="container">
+        <h3 style="margin-top:0;">PWA Automation Tool</h3>
+        <div class="input-group">
+            <label>Application Full Name</label>
+            <input type="text" id="appName" placeholder="e.g. My Online Store">
+        </div>
+        <div class="input-group">
+            <label>Short Name</label>
+            <input type="text" id="shortName" placeholder="e.g. Store">
+        </div>
+        <div class="input-group">
+            <label>Start Page (e.g. index.html)</label>
+            <input type="text" id="startUrl" value="index.html">
+        </div>
+        <div class="input-group">
+            <label>Theme Color</label>
+            <input type="color" id="themeColor" value="#0088cc" style="width:100%; height:40px; border:none; background:none;">
+        </div>
+        <div class="upload-area" id="uploadBox">
+            <img id="imagePreview" src="#" alt="Preview">
+            <div id="uploadPlaceholder">
+                <i class="fas fa-cloud-upload-alt fa-3x" style="color: var(--tg-blue);"></i><br>
+                <strong>Select PNG Icon</strong>
+            </div>
+            <input type="file" id="fileInput" accept="image/png" style="display:none">
+        </div>
+        <button class="btn" id="generateBtn">GENERATE PWA PACK</button>
+    </div>
+
+    <div id="loader"><i class="fas fa-spinner fa-spin"></i><p>Generating Assets...</p></div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // ব্যাক বাটন ফিক্স
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => {
+            window.location.href = "index.html";
+        });
+
+        // থিম সেটআপ
+        function applyTheme() {
+            document.documentElement.setAttribute('data-theme', tg.colorScheme);
+        }
+        tg.onEvent('themeChanged', applyTheme);
+        applyTheme();
+
+        // প্রোফাইল পিকচার
+        const user = tg.initDataUnsafe.user || {};
+        document.getElementById('profile-pic').src = user.username ? `https://t.me/i/userpic/160/${user.username}.jpg` : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+
+        // ইমেজ প্রিভিউ
+        const uploadBox = document.getElementById('uploadBox');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const placeholder = document.getElementById('uploadPlaceholder');
+
+        uploadBox.onclick = () => fileInput.click();
+        fileInput.onchange = () => {
+            const [file] = fileInput.files;
+            if (file) {
+                imagePreview.src = URL.createObjectURL(file);
+                imagePreview.style.display = 'block';
+                placeholder.style.display = 'none';
+            }
+        };
+
+        // জেনারেট লজিক
+        document.getElementById('generateBtn').onclick = async () => {
+            const file = fileInput.files[0];
+            const appName = document.getElementById('appName').value;
+            if (!file || !appName) { tg.showAlert("Please enter App Name and select an Icon!"); return; }
+
+            document.getElementById('loader').style.display = 'flex';
+            const formData = new FormData();
+            formData.append('image_file', file);
+            formData.append('chat_id', user.id || '');
+            formData.append('app_name', appName);
+            formData.append('short_name', document.getElementById('shortName').value);
+            formData.append('start_url', document.getElementById('startUrl').value);
+            formData.append('theme_color', document.getElementById('themeColor').value);
+
+            try {
+                const response = await fetch(window.location.href, { method: 'POST', body: formData });
+                const result = await response.json();
+                if (result.ok) {
+                    tg.showConfirm("PWA Pack sent to Telegram! ✅", (ok) => { if(ok) tg.close(); });
+                }
+            } catch (err) { tg.showAlert("Connection Error!"); }
+            finally { document.getElementById('loader').style.display = 'none'; }
+        };
+    </script>
+    
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const AdController = window.Adsgram.init({ blockId: "int-19383" });
+
+        AdController.show().then((result) => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                
+                setTimeout(() => {
+                    window.Telegram.WebApp.showAlert('Thanks for support 💝');
+                }, 200);
+            }
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

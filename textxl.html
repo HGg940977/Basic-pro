@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheet to Excel Converter</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+   
+    <style>
+        :root {
+          --telegram-bg: #ffffff;
+          --telegram-text: #000000;
+          --telegram-secondary: #707579;
+          --telegram-card: #ffffff;
+          --telegram-border: #e0e0e0;
+          --telegram-blue: #0088cc;
+          --telegram-green: #2eab5d;
+          --telegram-red: #ff3b30;
+          --telegram-light: #ebedf0;
+        }
+
+        [data-theme="dark"] {
+          --telegram-bg: #17212b;
+          --telegram-text: #e1e3e6;
+          --telegram-secondary: #a8b2bb;
+          --telegram-card: #232f3d;
+          --telegram-border: #2c3a48;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--telegram-bg);
+            color: var(--telegram-text);
+            transition: all 0.3s ease;
+        }
+
+        /* Header Styles */
+        .header {
+          padding: 15px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid var(--telegram-border);
+          background-color: var(--telegram-card);
+        }
+
+        .logo {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .logo img {
+          width: 30px;
+          height: 30px;
+        }
+
+        .logo-text {
+          font-weight: bold;
+          font-size: 18px;
+          color: var(--telegram-blue);
+        }
+
+        .profile {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          object-fit: cover;
+          cursor: pointer;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--telegram-text);
+            font-weight: 500;
+            font-size: 24px;
+        }
+
+        .description {
+            text-align: center;
+            margin-bottom: 25px;
+            color: var(--telegram-secondary);
+            font-size: 15px;
+            padding: 0 15px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--telegram-text);
+            font-size: 15px;
+        }
+
+        textarea {
+            width: 91%;
+            min-height: 200px;
+            padding: 15px;
+            border: 1px solid var(--telegram-border);
+            border-radius: 8px;
+            font-size: 15px;
+            resize: vertical;
+            background-color: var(--telegram-card);
+            color: var(--telegram-text);
+            font-family: monospace;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--telegram-blue);
+        }
+
+        .filename-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid var(--telegram-border);
+            border-radius: 8px;
+            font-size: 15px;
+            background-color: var(--telegram-card);
+            color: var(--telegram-text);
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--telegram-blue);
+        }
+
+        .file-extension {
+            font-size: 15px;
+            color: var(--telegram-secondary);
+        }
+
+        .button-container {
+            margin: 25px 0;
+        }
+
+        .convert-btn {
+            background-color: var(--telegram-blue);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+
+        .convert-btn:hover {
+            background-color: var(--telegram-light);
+        }
+
+        .convert-btn:disabled {
+            background-color: var(--telegram-secondary);
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        .processing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .spinner {
+            font-size: 40px;
+            color: var(--telegram-blue);
+            margin-bottom: 15px;
+            animation: spin 1s linear infinite;
+        }
+
+        .success-icon {
+            font-size: 60px;
+            color: var(--telegram-green);
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .processing-text {
+            color: white;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            color: var(--telegram-red);
+            text-align: center;
+            margin: 15px 0;
+            font-weight: 500;
+            display: none;
+            font-size: 15px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 22px;
+            }
+            
+            .description {
+                font-size: 14px;
+            }
+            
+            textarea {
+                min-height: 180px;
+                font-size: 14px;
+            }
+            
+            input[type="text"] {
+                font-size: 14px;
+            }
+            
+            .convert-btn {
+                padding: 12px 15px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+      <div class="logo">
+        <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png" alt="Logo">
+        <div class="logo-text">Basic Touch Pro</div>
+      </div>
+      <img id="profile-pic" class="profile" src="" alt="Profile" onclick="goToPage('tg.html')">
+    </div>
+
+    <div class="container">
+        <h1>Google Sheet to Excel Converter</h1>
+        <p class="description">Paste your copied Google Sheets data to convert it to Excel format</p>
+        
+        <div class="input-group">
+            <label for="dataInput"><i class="fas fa-table"></i> Spreadsheet Data:</label>
+            <textarea id="dataInput" rows="10" placeholder="Copy data from Google Sheets and paste here..."></textarea>
+        </div>
+        
+        <div class="filename-container">
+            <label for="fileName"><i class="far fa-file-excel"></i> File name:</label>
+            <input type="text" id="fileName" placeholder="Enter file name" value="converted_sheet" />
+            <div class="file-extension">.xlsx</div>
+        </div>
+        
+        <div class="button-container">
+            <button id="convertBtn" class="convert-btn">
+                <i class="fas fa-file-excel"></i> Convert Excel File
+            </button>
+        </div>
+        
+        <div class="error-message" id="errorMessage">
+            <i class="fas fa-exclamation-circle"></i> <span id="errorText"></span>
+        </div>
+        
+        <div class="processing-overlay" id="processingOverlay">
+            <i class="fas fa-spinner spinner" id="spinnerIcon"></i>
+            <i class="fas fa-check-circle success-icon" id="successIcon"></i>
+            <div class="processing-text" id="processingText">Processing...</div>
+        </div>
+    </div>
+
+
+    <script>
+        // Initialize Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // Back button handling
+        Telegram.WebApp.BackButton.show();
+        Telegram.WebApp.BackButton.onClick(() => {
+          window.location.href = "index.html"; // Pointing to PHP index
+        });
+        
+        // Button tg.html
+        function goToPage(page) {
+            window.location.href = page;
+        } 
+
+        // Apply Telegram theme
+        function applyTheme() {
+            const theme = tg.colorScheme;
+            document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+        }
+
+        // Listen for theme changes
+        tg.onEvent('themeChanged', applyTheme);
+        applyTheme();
+
+        // Get user info
+        const user = Telegram.WebApp.initDataUnsafe.user || {};
+        const username = user.username || 'user';
+        const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Telegram User';
+        const profilePicUrl = `https://t.me/i/userpic/160/${username}.jpg`;
+        
+        // Set profile picture if available
+        const profilePic = document.getElementById('profile-pic');
+        if (username !== 'user') {
+            profilePic.src = profilePicUrl;
+        } else {
+            profilePic.style.display = 'none';
+        }
+
+        // DOM elements
+        const dataInput = document.getElementById('dataInput');
+        const fileNameInput = document.getElementById('fileName');
+        const convertBtn = document.getElementById('convertBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const processingOverlay = document.getElementById('processingOverlay');
+        const spinnerIcon = document.getElementById('spinnerIcon');
+        const successIcon = document.getElementById('successIcon');
+        const processingText = document.getElementById('processingText');
+
+        // Auto-focus the textarea on page load
+        dataInput.focus();
+        
+        function processData() {
+            const rawData = dataInput.value.trim();
+            let fileName = fileNameInput.value.trim();
+            
+            fileName = fileName.replace(/\.xlsx$/i, '') || 'converted_sheet';
+            
+            if (!rawData) {
+                showError('Please paste spreadsheet data first');
+                return false;
+            }
+            
+            try {
+                // Client-side Excel generation (efficient)
+                const rows = rawData.split(/\r?\n/).map(row => row.split("\t"));
+                const ws = XLSX.utils.aoa_to_sheet(rows);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+                
+                return {
+                    excelFile: XLSX.write(wb, { bookType: 'xlsx', type: 'array' }),
+                    fileName: fileName + '.xlsx'
+                };
+            } catch (error) {
+                console.error('Conversion error:', error);
+                showError('Error processing spreadsheet data');
+                return false;
+            }
+        }
+        
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.style.display = 'block';
+            setTimeout(() => errorMessage.style.display = 'none', 3000);
+        }
+
+        function showProcessing(message) {
+            processingText.textContent = message;
+            processingOverlay.style.display = 'flex';
+            spinnerIcon.style.display = 'block';
+            successIcon.style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            spinnerIcon.style.display = 'none';
+            successIcon.style.display = 'block';
+            processingText.textContent = message;
+        }
+
+        function resetButton() {
+            convertBtn.disabled = false;
+        }
+
+        async function sendToTelegram(blob, filename) {
+            const formData = new FormData();
+            formData.append('chat_id', user.id);
+            formData.append('document', new File([blob], filename));
+            formData.append('caption', `${fullName}, your Excel file: ${filename}`);
+
+            try {
+                // SECURE CHANGE: Post to this PHP file instead of Telegram directly
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (data.ok) {
+                    showSuccess('File sent successfully!');
+                    
+                    // Show confirmation message
+                    setTimeout(() => {
+                        Telegram.WebApp.showAlert('XLSX File generated and sent successfully! ✅', () => {
+                            // This callback runs only when user clicks OK
+                            tg.close();
+                        });
+                    }, 1000);
+                } else {
+                    throw new Error(data.description || 'Failed to send file');
+                }
+            } catch (error) {
+                console.error('Telegram API error:', error);
+                showError('Failed to send file. Please try again.');
+                resetButton();
+                processingOverlay.style.display = 'none';
+            }
+        }
+
+        convertBtn.addEventListener('click', async () => {
+            convertBtn.disabled = true;
+            showProcessing("Converting to Excel...");
+            
+            const result = processData();
+            if (!result) {
+                resetButton();
+                processingOverlay.style.display = 'none';
+                return;
+            }
+
+            setTimeout(async () => {
+                try {
+                    const blob = new Blob([result.excelFile], { 
+                        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+                    });
+                    await sendToTelegram(blob, result.fileName);
+                } catch (error) {
+                    console.error('Error:', error);
+                    showError('An error occurred during conversion');
+                    resetButton();
+                    processingOverlay.style.display = 'none';
+                }
+            }, 500);
+        });
+    </script>
+    
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const AdController = window.Adsgram.init({ blockId: "int-19383" });
+
+        AdController.show().then((result) => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                
+                setTimeout(() => {
+                    window.Telegram.WebApp.showAlert('Thanks for support 💝');
+                }, 200);
+            }
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

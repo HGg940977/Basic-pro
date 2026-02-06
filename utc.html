@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Unix Timestamp Converter - Basic Touch Pro</title>
+    <meta name="description" content="Convert Unix timestamps to human-readable dates and vice versa. Support for UTC, Local Time, and Seconds/Milliseconds detection.">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg: var(--tg-theme-bg-color, #ffffff);
+            --text: var(--tg-theme-text-color, #000000);
+            --hint: var(--tg-theme-hint-color, #707579);
+            --btn: var(--tg-theme-button-color, #0088cc);
+            --btn-text: var(--tg-theme-button-text-color, #ffffff);
+            --secondary: var(--tg-theme-secondary-bg-color, #f4f4f5);
+            --border: var(--tg-theme-hint-color, #e0e0e0);
+            --green: #2eab5d;
+        }
+
+        body {
+            font-family: -apple-system, sans-serif;
+            margin: 0; background-color: var(--secondary); color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* হেডার */
+        .header {
+            padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;
+            background: var(--bg); border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo img { width: 30px; height: 30px; }
+        .logo-text { font-weight: bold; font-size: 18px; color: var(--btn); }
+        .profile { width: 35px; height: 35px; border-radius: 50%; border: 1px solid var(--btn); cursor: pointer; object-fit: cover; }
+
+        .container { padding: 20px 15px; max-width: 600px; margin: 0 auto; }
+
+        /* কার্ড স্টাইল */
+        .card {
+            background: var(--bg); border-radius: 16px; padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .current-time-box {
+            text-align: center; margin-bottom: 15px; padding: 10px;
+            background: var(--secondary); border-radius: 10px; font-weight: bold;
+        }
+
+        .label { font-size: 13px; color: var(--hint); margin-bottom: 8px; display: block; font-weight: 600; }
+        
+        .input-group { position: relative; margin-bottom: 15px; }
+        input[type="text"], input[type="number"], input[type="datetime-local"] {
+            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border);
+            background: var(--secondary); color: var(--text); font-size: 16px; outline: none;
+            box-sizing: border-box;
+        }
+        input:focus { border-color: var(--btn); }
+
+        .btn-row { display: flex; gap: 10px; margin-top: 10px; }
+        .main-btn {
+            flex: 1; background: var(--btn); color: var(--btn-text); border: none;
+            padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .secondary-btn {
+            background: var(--secondary); color: var(--text); border: 1px solid var(--border);
+            padding: 10px 15px; border-radius: 10px; cursor: pointer; font-size: 13px;
+        }
+
+        /* রেজাল্ট সেকশন */
+        .result-box {
+            margin-top: 15px; padding: 15px; border-radius: 12px;
+            background: var(--secondary); border: 1px dashed var(--btn);
+        }
+        .res-item { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+        .res-item:last-child { margin-bottom: 0; }
+        .res-item span:first-child { color: var(--hint); }
+        .res-item span:last-child { font-weight: bold; text-align: right; }
+
+        h1 { font-size: 22px; text-align: center; margin-bottom: 5px; }
+        p.subtitle { text-align: center; color: var(--hint); font-size: 14px; margin-bottom: 20px; }
+
+        .copy-icon { color: var(--btn); cursor: pointer; margin-left: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="logo">
+        <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png" alt="Logo">
+        <div class="logo-text">Basic Touch Pro</div>
+    </div>
+    <img id="u-avatar" class="profile" src="https://ui-avatars.com/api/?name=User" alt="P" onclick="window.location.href='tg.html'">
+</div>
+
+<div class="container">
+    <h1>Timestamp Converter</h1>
+    <p class="subtitle">Convert between Unix Epoch and Readable Date</p>
+
+    <div class="current-time-box">
+        Current Unix Timestamp: <span id="live-ts" style="color:var(--btn)">0000000000</span>
+    </div>
+
+    <!-- Unix to Date Card -->
+    <div class="card">
+        <label class="label"><i class="fas fa-clock"></i> UNIX TIMESTAMP TO DATE</label>
+        <div class="input-group">
+            <input type="number" id="ts-input" placeholder="Enter Unix timestamp (e.g. 1738320000)">
+        </div>
+        <div class="btn-row">
+            <button class="main-btn" onclick="tsToDate()"><i class="fas fa-sync"></i> Convert</button>
+            <button class="secondary-btn" onclick="resetTs()"><i class="fas fa-redo"></i> Reset</button>
+        </div>
+
+        <div id="ts-res-box" class="result-box" style="display:none;">
+            <div class="res-item">
+                <span>Format:</span>
+                <span id="ts-format-type">Seconds</span>
+            </div>
+            <div class="res-item">
+                <span>GMT / UTC:</span>
+                <span id="ts-utc"></span>
+            </div>
+            <div class="res-item">
+                <span>Local Time:</span>
+                <span id="ts-local"></span>
+            </div>
+            <div style="text-align:right; margin-top:5px;">
+                <i class="fas fa-copy copy-icon" title="Copy Date" onclick="copyText('ts-local')"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date to Unix Card -->
+    <div class="card">
+        <label class="label"><i class="fas fa-calendar-alt"></i> DATE TO UNIX TIMESTAMP</label>
+        <div class="input-group">
+            <input type="datetime-local" id="date-input">
+        </div>
+        <div class="btn-row">
+            <button class="main-btn" onclick="dateToTs()" style="background:var(--green);"><i class="fas fa-long-arrow-alt-right"></i> Convert</button>
+            <button class="secondary-btn" onclick="resetDate()"><i class="fas fa-redo"></i> Reset</button>
+        </div>
+
+        <div id="date-res-box" class="result-box" style="display:none;">
+            <div class="res-item">
+                <span>Timestamp (s):</span>
+                <span id="res-ts-s"></span>
+            </div>
+            <div class="res-item">
+                <span>Timestamp (ms):</span>
+                <span id="res-ts-ms"></span>
+            </div>
+            <div style="text-align:right; margin-top:5px;">
+                <i class="fas fa-copy copy-icon" title="Copy Timestamp" onclick="copyText('res-ts-s')"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.BackButton.show();
+    tg.BackButton.onClick(() => window.location.href = "index.html");
+
+    const user = tg.initDataUnsafe.user || {};
+    if(user.username) document.getElementById('u-avatar').src = `https://t.me/i/userpic/160/${user.username}.jpg`;
+
+    // Live Timestamp
+    setInterval(() => {
+        document.getElementById('live-ts').innerText = Math.floor(Date.now() / 1000);
+    }, 1000);
+
+    // Timestamp to Date Logic
+    function tsToDate() {
+        let ts = document.getElementById('ts-input').value;
+        if (!ts) return tg.showAlert("Please enter a timestamp!");
+
+        let date;
+        if (ts.length > 11) {
+            date = new Date(parseInt(ts));
+            document.getElementById('ts-format-type').innerText = "Milliseconds (13-digit)";
+        } else {
+            date = new Date(parseInt(ts) * 1000);
+            document.getElementById('ts-format-type').innerText = "Seconds (10-digit)";
+        }
+
+        if (isNaN(date.getTime())) return tg.showAlert("Invalid Timestamp!");
+
+        document.getElementById('ts-utc').innerText = date.toUTCString();
+        document.getElementById('ts-local').innerText = date.toLocaleString();
+        document.getElementById('ts-res-box').style.display = 'block';
+    }
+
+    // Date to Timestamp Logic
+    function dateToTs() {
+        const dateVal = document.getElementById('date-input').value;
+        if (!dateVal) return tg.showAlert("Please select a date and time!");
+
+        const date = new Date(dateVal);
+        const ms = date.getTime();
+        const s = Math.floor(ms / 1000);
+
+        document.getElementById('res-ts-s').innerText = s;
+        document.getElementById('res-ts-ms').innerText = ms;
+        document.getElementById('date-res-box').style.display = 'block';
+    }
+
+    function resetTs() {
+        document.getElementById('ts-input').value = '';
+        document.getElementById('ts-res-box').style.display = 'none';
+    }
+
+    function resetDate() {
+        document.getElementById('date-input').value = '';
+        document.getElementById('date-res-box').style.display = 'none';
+    }
+
+    function copyText(id) {
+        const text = document.getElementById(id).innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            tg.showAlert("Copied: " + text + " ✅");
+        });
+    }
+
+    // Set default date to now
+    window.onload = () => {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('date-input').value = now.toISOString().slice(0, 16);
+    };
+</script>
+
+
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const AdController = window.Adsgram.init({ blockId: "int-19383" });
+
+        AdController.show().then((result) => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                
+                setTimeout(() => {
+                    window.Telegram.WebApp.showAlert('Thanks for support 💝');
+                }, 200);
+            }
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+</script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

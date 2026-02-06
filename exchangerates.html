@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Live Currency & Crypto Converter - Basic Touch Pro</title>
+    <meta name="description" content="Convert live exchange rates for 160+ fiat currencies and top cryptocurrencies like BTC, ETH, USDT to BDT, USD and more.">
+    
+    <!-- SDK & Icons -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg: var(--tg-theme-bg-color, #ffffff);
+            --text: var(--tg-theme-text-color, #000000);
+            --hint: var(--tg-theme-hint-color, #707579);
+            --btn: var(--tg-theme-button-color, #0088cc);
+            --btn-text: var(--tg-theme-button-text-color, #ffffff);
+            --secondary: var(--tg-theme-secondary-bg-color, #f4f4f5);
+            --card-bg: var(--tg-theme-bg-color, #ffffff);
+            --border: var(--tg-theme-hint-color, #e0e0e0);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0; background-color: var(--secondary); color: var(--text);
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+
+        /* হেডার */
+        .header {
+            padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;
+            background: var(--bg); border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo img { width: 30px; height: 30px; }
+        .logo-text { font-weight: bold; font-size: 18px; color: var(--btn); }
+        .profile { width: 35px; height: 35px; border-radius: 50%; border: 1px solid var(--btn); object-fit: cover; }
+
+        /* মেইন কন্টেইনার */
+        .container {
+            padding: 20px 15px; max-width: 500px; margin: 0 auto; width: 100%; box-sizing: border-box;
+        }
+
+        .converter-card {
+            background: var(--card-bg); border-radius: 16px; padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border);
+        }
+
+        .input-group { margin-bottom: 20px; }
+        .label { font-size: 13px; color: var(--hint); margin-bottom: 8px; display: block; font-weight: 500; }
+        
+        input[type="number"] {
+            width: 100%; padding: 12px 15px; border-radius: 10px; border: 1px solid var(--border);
+            background: var(--secondary); color: var(--text); font-size: 18px; font-weight: bold;
+            box-sizing: border-box; outline: none; transition: border-color 0.3s;
+        }
+        input[type="number"]:focus { border-color: var(--btn); }
+
+        .selection-row {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
+        }
+
+        .select-box {
+            flex: 1; position: relative;
+        }
+
+        .custom-select {
+            padding: 10px; background: var(--secondary); border: 1px solid var(--border);
+            border-radius: 10px; display: flex; align-items: center; gap: 8px; cursor: pointer;
+        }
+        .custom-select img { width: 20px; border-radius: 2px; }
+
+        .swap-btn {
+            width: 40px; height: 40px; border-radius: 50%; background: var(--btn);
+            color: var(--btn-text); display: flex; align-items: center; justify-content: center;
+            cursor: pointer; border: none; transition: 0.3s;
+        }
+        .swap-btn:active { transform: rotate(180deg); }
+
+        /* রেজাল্ট সেকশন */
+        .result-area {
+            text-align: center; margin-top: 10px; padding-top: 20px; border-top: 1px dashed var(--border);
+        }
+        .res-amount { font-size: 28px; font-weight: 800; color: var(--btn); margin: 5px 0; }
+        .res-rate { font-size: 13px; color: var(--hint); }
+
+        /* সার্চেবল লিস্ট */
+        .search-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); z-index: 1000; display: none; flex-direction: column;
+        }
+        .search-header {
+            padding: 15px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; align-items: center;
+        }
+        
+        /* সার্চ ইনপুট ফোকাস কালার আপডেট */
+        .search-input {
+            flex: 1; padding: 12px; border-radius: 10px; border: 1px solid var(--border);
+            background: var(--secondary); color: var(--text); outline: none;
+            font-size: 16px; transition: all 0.3s ease;
+        }
+        .search-input:focus {
+            border-color: var(--btn);
+            box-shadow: 0 0 0 1px var(--btn); /* আরও স্পষ্ট করার জন্য হালকা শ্যাডো */
+        }
+
+        .currency-list { overflow-y: auto; flex: 1; }
+        .currency-item {
+            padding: 12px 15px; display: flex; align-items: center; gap: 15px;
+            border-bottom: 1px solid var(--secondary); cursor: pointer;
+        }
+        .currency-item:active { background: var(--secondary); }
+
+        .update-time { font-size: 11px; text-align: center; color: var(--hint); margin-top: 15px; }
+
+        #loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center;
+            z-index: 2000; color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div id="loader"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+
+<div class="header">
+    <div class="logo">
+        <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png" alt="Logo">
+        <div class="logo-text">Basic Touch Pro</div>
+    </div>
+    <img id="u-avatar" class="profile" src="https://ui-avatars.com/api/?name=User" alt="P">
+</div>
+
+<div class="container">
+    <div class="converter-card">
+        <div class="input-group">
+            <label class="label">Amount to Convert</label>
+            <input type="number" id="amount" value="1" placeholder="Enter amount..." oninput="calculate()">
+        </div>
+
+        <div class="selection-row">
+            <div class="select-box" onclick="openSearch('from')">
+                <span class="label">From</span>
+                <div class="custom-select" id="from-display">
+                    <img id="from-flag" src="https://flagcdn.com/w20/us.png">
+                    <span id="from-code">USD</span>
+                </div>
+            </div>
+
+            <button class="swap-btn" onclick="swapCurrencies()">
+                <i class="fas fa-exchange-alt"></i>
+            </button>
+
+            <div class="select-box" onclick="openSearch('to')">
+                <span class="label">To</span>
+                <div class="custom-select" id="to-display">
+                    <img id="to-flag" src="https://flagcdn.com/w20/bd.png">
+                    <span id="to-code">BDT</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="result-area">
+            <div id="result-label" style="font-size: 14px; color: var(--hint);">Converted Amount</div>
+            <div class="res-amount" id="res-val">0.00</div>
+            <div class="res-rate" id="rate-text">1 USD = 0.00 BDT</div>
+        </div>
+        
+        <div class="update-time" id="last-update">Last Updated: Loading...</div>
+    </div>
+</div>
+
+<!-- Search Modal -->
+<div class="search-modal" id="search-modal">
+    <div class="search-header">
+        <button onclick="closeSearch()" style="background:none; border:none; color:var(--btn); font-size:18px; cursor:pointer;"><i class="fas fa-arrow-left"></i></button>
+        <input type="text" class="search-input" id="search-query" placeholder="Search currency or crypto..." oninput="filterCurrencies()">
+    </div>
+    <div class="currency-list" id="currency-list">
+        <!-- JS will populate -->
+    </div>
+</div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.BackButton.show();
+    tg.BackButton.onClick(() => window.location.href = "index.html");
+
+    const user = tg.initDataUnsafe.user || {};
+    if(user.username) document.getElementById('u-avatar').src = `https://t.me/i/userpic/160/${user.username}.jpg`;
+
+    let currencies = []; 
+    let exchangeRates = {}; 
+    let activeTarget = 'from';
+    let fromCurrency = "USD";
+    let toCurrency = "BDT";
+
+    const cryptos = [
+        { code: "BTC", name: "Bitcoin", id: "bitcoin" },
+        { code: "ETH", name: "Ethereum", id: "ethereum" },
+        { code: "USDT", name: "Tether", id: "tether" },
+        { code: "LTC", name: "Litecoin", id: "litecoin" },
+        { code: "BNB", name: "Binance Coin", id: "binancecoin" },
+        { code: "XRP", name: "XRP", id: "ripple" },
+        { code: "SOL", name: "Solana", id: "solana" },
+        { code: "DOGE", name: "Dogecoin", id: "dogecoin" },
+        { code: "TRX", name: "TRON", id: "tron" }
+    ];
+
+    async function init() {
+        showLoader(true);
+        try {
+            const fiatRes = await fetch('https://open.er-api.com/v6/latest/USD');
+            const fiatData = await fiatRes.json();
+            exchangeRates = fiatData.rates;
+            
+            const fiatList = Object.keys(fiatData.rates).map(code => ({
+                code: code,
+                name: code + " Currency",
+                isCrypto: false,
+                flag: `https://flagcdn.com/w40/${code.toLowerCase().substring(0,2)}.png`
+            }));
+
+            const cryptoIds = cryptos.map(c => c.id).join(',');
+            const cryptoRes = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cryptoIds}&vs_currencies=usd`);
+            const cryptoData = await cryptoRes.json();
+
+            const cryptoList = cryptos.map(c => {
+                const usdPrice = cryptoData[c.id].usd;
+                exchangeRates[c.code] = 1 / usdPrice; 
+                return {
+                    code: c.code,
+                    name: c.name,
+                    isCrypto: true,
+                    flag: `https://assets.coingecko.com/coins/images/1/small/${c.id}.png`
+                };
+            });
+
+            currencies = [...cryptoList, ...fiatList];
+            document.getElementById('last-update').innerText = "Last Updated: " + new Date().toLocaleTimeString();
+            calculate();
+        } catch (e) {
+            tg.showAlert("Failed to load live rates. Please try again.");
+        }
+        showLoader(false);
+    }
+
+    function calculate() {
+        const amount = document.getElementById('amount').value || 0;
+        const rateFrom = exchangeRates[fromCurrency];
+        const rateTo = exchangeRates[toCurrency];
+
+        const valInUsd = amount / rateFrom;
+        const finalVal = valInUsd * rateTo;
+
+        document.getElementById('res-val').innerText = finalVal.toLocaleString(undefined, {maximumFractionDigits: 4});
+        
+        const singleRate = (1 / rateFrom) * rateTo;
+        document.getElementById('rate-text').innerText = `1 ${fromCurrency} = ${singleRate.toFixed(4)} ${toCurrency}`;
+    }
+
+    function openSearch(target) {
+        activeTarget = target;
+        document.getElementById('search-modal').style.display = 'flex';
+        renderList(currencies);
+        setTimeout(() => document.getElementById('search-query').focus(), 100);
+    }
+
+    function closeSearch() {
+        document.getElementById('search-modal').style.display = 'none';
+        document.getElementById('search-query').value = '';
+    }
+
+    function renderList(list) {
+        const listContainer = document.getElementById('currency-list');
+        listContainer.innerHTML = list.map(c => `
+            <div class="currency-item" onclick="selectCurrency('${c.code}', '${c.flag}', ${c.isCrypto})">
+                <img src="${c.flag}" onerror="this.src='https://flagcdn.com/w20/un.png'" width="30">
+                <div>
+                    <div style="font-weight:bold">${c.code}</div>
+                    <div style="font-size:12px; color:var(--hint)">${c.name}</div>
+                </div>
+                ${c.isCrypto ? '<span style="margin-left:auto; font-size:10px; background:var(--btn); color:white; padding:2px 6px; border-radius:4px;">Crypto</span>' : ''}
+            </div>
+        `).join('');
+    }
+
+    function filterCurrencies() {
+        const q = document.getElementById('search-query').value.toLowerCase();
+        const filtered = currencies.filter(c => c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q));
+        renderList(filtered);
+    }
+
+    function selectCurrency(code, flag, isCrypto) {
+        if (activeTarget === 'from') {
+            fromCurrency = code;
+            document.getElementById('from-code').innerText = code;
+            document.getElementById('from-flag').src = flag;
+        } else {
+            toCurrency = code;
+            document.getElementById('to-code').innerText = code;
+            document.getElementById('to-flag').src = flag;
+        }
+        closeSearch();
+        calculate();
+    }
+
+    function swapCurrencies() {
+        const tempCode = fromCurrency;
+        const tempFlag = document.getElementById('from-flag').src;
+
+        fromCurrency = toCurrency;
+        document.getElementById('from-code').innerText = toCurrency;
+        document.getElementById('from-flag').src = document.getElementById('to-flag').src;
+
+        toCurrency = tempCode;
+        document.getElementById('to-code').innerText = tempCode;
+        document.getElementById('to-flag').src = tempFlag;
+
+        calculate();
+    }
+
+    function showLoader(show) {
+        document.getElementById('loader').style.display = show ? 'flex' : 'none';
+    }
+
+    init();
+</script>
+
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const AdController = window.Adsgram.init({ blockId: "int-19383" });
+
+        AdController.show().then((result) => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                
+                setTimeout(() => {
+                    window.Telegram.WebApp.showAlert('Thanks for support 💝');
+                }, 200);
+            }
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

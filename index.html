@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Basic Touch Pro</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --telegram-bg: #ffffff;
+      --telegram-text: #000000;
+      --telegram-secondary: #707579;
+      --telegram-card: #ffffff;
+      --telegram-border: #e0e0e0;
+      --telegram-blue: #0088cc;
+      --telegram-green: #2eab5d;
+      --telegram-red: #ff3b30;
+      --telegram-purple: #9b59b6;
+      --telegram-orange: #ff9500;
+      --telegram-light: #ebedf0;
+      --telegram-focus: rgba(0, 136, 204, 0.2);
+    }
+
+    [data-theme="dark"] {
+      --telegram-bg: #17212b;
+      --telegram-text: #e1e3e6;
+      --telegram-secondary: #a8b2bb;
+      --telegram-card: #232f3d;
+      --telegram-border: #2c3a48;
+      --telegram-light: #2b5278;
+      --telegram-focus: rgba(0, 136, 204, 0.4);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--telegram-bg);
+      color: var(--telegram-text);
+      overflow-x: hidden;
+    }
+
+    /* Preloader */
+    #preloader {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: var(--telegram-bg); display: flex; flex-direction: column;
+      justify-content: center; align-items: center; z-index: 9999;
+    }
+    .telegram-loader { width: 64px; height: 64px; position: relative; }
+    .telegram-loader-circle { position: absolute; width: 100%; height: 100%; border: 3px solid transparent;
+      border-top-color: var(--telegram-blue); border-radius: 50%; animation: spin 1s linear infinite;
+    }
+    .telegram-loader-circle:nth-child(2) { border-top-color: var(--telegram-green); width: 80%; height: 80%; top: 10%; left: 10%; animation-duration: 1.5s; }
+    .telegram-loader-circle:nth-child(3) { border-top-color: var(--telegram-purple); width: 60%; height: 60%; top: 20%; left: 20%; animation-duration: 2s; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .preloader-text { margin-top: 20px; font-size: 18px; color: var(--telegram-text); font-weight: 500; }
+    .welcome-text { font-size: 24px; font-weight: bold; color: var(--telegram-blue); margin-bottom: 10px; text-align: center; }
+
+    /* Main Content */
+    #main-content { display: none; opacity: 0; transition: opacity 0.5s ease; }
+
+    /* Header */
+    .header { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--telegram-border); background-color: var(--telegram-card); }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo img { width: 30px; height: 30px; }
+    .logo-text { font-weight: bold; font-size: 18px; color: var(--telegram-blue); }
+    .profile-container { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; position: relative; overflow: hidden; }
+    .profile { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
+    .profile-container:hover .profile { transform: scale(1.1); }
+
+    /* Container */
+    .container { padding: 15px; animation: fadeIn 0.5s ease forwards; padding-bottom: 70px; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* Search Box */
+    .search-container { margin: 15px auto; max-width: 400px; position: relative; }
+    .search-box { width: 100%; padding: 12px 15px 12px 45px; border-radius: 12px; border: 1px solid var(--telegram-border); background-color: var(--telegram-card); color: var(--telegram-text); font-size: 14px; outline: none; transition: all 0.3s ease; }
+    .search-box:focus { border-color: var(--telegram-blue); box-shadow: 0 0 0 3px var(--telegram-focus); }
+    .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--telegram-secondary); }
+
+    /* Telegram Buttons */
+    .telegram-buttons-row {
+        display: flex;
+        gap: 10px;
+        max-width: 400px;
+        margin: 0 auto 15px;
+    }
+    .telegram-join-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .telegram-join-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    .telegram-join-btn.channel { background: linear-gradient(135deg, #0088cc, #2eab5d); }
+    .telegram-join-btn.group { background: linear-gradient(135deg, #9b59b6, #ff9500); }
+    .telegram-join-btn i { font-size: 16px; }
+
+    /* Invite Button */
+    .invite-btn { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border: none; border-radius: 12px; padding: 12px 20px; margin: 15px auto; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); width: 100%; max-width: 400px; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 500; }
+    .invite-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); }
+
+    /* Banner Slider */
+    .banner-slider { max-width: 400px; margin: 15px auto; position: relative; overflow: hidden; border-radius: 12px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+    .banner-slides { display: flex; transition: transform 0.5s ease; width: 100%; touch-action: pan-y; }
+    .banner-slide { min-width: 100%; position: relative; cursor: pointer; }
+    .banner-slide img { width: 100%; height: auto; display: block; border-radius: 12px; }
+    .banner-dots { text-align: center; margin-top: 10px; }
+    .banner-dot { cursor: pointer; height: 8px; width: 8px; margin: 0 4px; background-color: var(--telegram-secondary); border-radius: 50%; display: inline-block; transition: background-color 0.3s ease; }
+    .banner-dot.active { background-color: var(--telegram-blue); }
+
+    /* Section Title */
+    .section-title { font-size: 18px; font-weight: 600; margin: 25px 0 15px; color: var(--telegram-text); display: flex; align-items: center; gap: 10px; }
+
+    /* Tools Grid */
+    .tools-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
+    .tool-card { background-color: var(--telegram-card); border-radius: 16px; padding: 15px; text-align: center; border: 1px solid var(--telegram-border); cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); position: relative; overflow: hidden; }
+    .tool-card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); border-color: var(--telegram-blue); }
+    .tool-icon-container { width: 70px; height: 70px; margin: 0 auto 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background-color: var(--telegram-light); position: relative; overflow: hidden; border: 2px solid var(--telegram-border); }
+    .tool-icon { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; transition: transform 0.3s ease; }
+    .tool-card:hover .tool-icon { transform: scale(1.1); }
+    .tool-name { font-weight: 600; font-size: 14px; color: var(--telegram-text); margin-bottom: 5px; }
+    .tool-desc { color: var(--telegram-secondary); font-size: 12px; opacity: 0.8; }
+
+    /* Footer */
+    .footer { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--telegram-card); padding: 12px 0; text-align: center; border-top: 1px solid var(--telegram-border); z-index: 100; }
+    .developer-credit { display: inline-flex; align-items: center; gap: 6px; color: var(--telegram-secondary); font-size: 13px; text-decoration: none; transition: color 0.2s; }
+    .developer-credit:hover { color: var(--telegram-blue); }
+    .developer-icon { color: var(--telegram-blue); }
+
+    /* Notification */
+    .tg-notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--telegram-card); color: var(--telegram-text); padding: 12px 16px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); border: 1px solid var(--telegram-border); z-index: 1002; opacity: 0; transition: all 0.3s ease; max-width: 90%; width: max-content; }
+    .tg-notification.show { opacity: 1; bottom: 80px; }
+    .tg-notification.success { background-color: var(--telegram-green); color: white; }
+
+    /* Modal Styles */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 1001; padding: 15px; }
+    .modal-content { background-color: var(--telegram-card); padding: 25px; border-radius: 16px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2); width: 100%; max-width: 320px; text-align: center; position: relative; animation: modal-fade-in 0.3s ease-out; }
+    @keyframes modal-fade-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+    .modal-header { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 15px; }
+    .modal-header img { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--telegram-border); }
+    .modal-header h3 { font-size: 20px; font-weight: 600; color: var(--telegram-text); }
+    .modal-content p { font-size: 14px; color: var(--telegram-secondary); margin-bottom: 20px; }
+    .modal-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .modal-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; border: none; border-radius: 10px; font-size: 16px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; }
+    .modal-btn.start { background-color: var(--telegram-blue); color: white; }
+    .modal-btn.start:hover { opacity: 0.9; }
+    .modal-btn.share { background-color: var(--telegram-light); color: var(--telegram-text); }
+    .modal-btn.share:hover { background-color: var(--telegram-border); }
+    .modal-close { position: absolute; top: 10px; right: 15px; font-size: 28px; color: var(--telegram-secondary); cursor: pointer; line-height: 1; }
+    .modal-close:hover { color: var(--telegram-text); }
+  </style>
+</head>
+<body>
+  <!-- Preloader -->
+  <div id="preloader">
+    <div class="telegram-loader">
+      <div class="telegram-loader-circle"></div>
+      <div class="telegram-loader-circle"></div>
+      <div class="telegram-loader-circle"></div>
+    </div>
+    <div class="welcome-text">Welcome to BasicTouchPro</div>
+    <div class="preloader-text">Enjoy Today</div>
+  </div>
+
+  <!-- Main Content -->
+  <div id="main-content">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png" alt="Logo">
+        <div class="logo-text">Basic Touch Pro</div>
+      </div>
+      <div class="profile-container" onclick="goToPage('tg.html')">
+        <img id="profile-pic" class="profile" src="" alt="Profile">
+      </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+      <!-- Telegram Buttons -->
+      <div class="telegram-buttons-row">
+        <button class="telegram-join-btn channel" onclick="openTelegramChannel()">
+          <i class="fab fa-telegram-plane"></i>
+          <span>Channel</span>
+        </button>
+        <button class="telegram-join-btn group" onclick="openTelegramGroup()">
+          <i class="fas fa-users"></i>
+          <span>Group</span>
+        </button>
+      </div>
+
+      <!-- Banner Slider -->
+      <div class="banner-slider">
+        <div class="banner-slides" id="bannerSlides"></div>
+        <div class="banner-dots" id="bannerDots"></div>
+      </div>
+
+     <!-- Invite Button -->
+      <div>
+        <button class="invite-btn" onclick="shareBot()">
+          <i class="fas fa-user-plus"></i> Invite Friends
+        </button>
+      </div>
+
+     <!-- Search Box -->
+      <div class="search-container">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" class="search-box" placeholder="Search tools..." id="searchInput">
+      </div>
+
+      <!-- Tools Section -->
+      <div class="section-title">
+        <i class="fas fa-tools"></i> Tools Menu
+      </div>
+      <div class="tools-grid" id="toolsGrid"></div>
+    </div>
+  </div>
+
+  <!-- Deep Link Modal -->
+  <div id="deep-link-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <img id="modal-tool-logo" src="" alt="Tool Logo">
+        <h3 id="modal-tool-title"></h3>
+      </div>
+      <p id="modal-tool-desc"></p>
+      <div class="modal-buttons">
+        <button id="modal-start-btn" class="modal-btn start"><i class="fas fa-rocket"></i><span>Start</span></button>
+        <button id="modal-share-btn" class="modal-btn share"><i class="fas fa-share-alt"></i><span>Share</span></button>
+      </div>
+      <div class="modal-close" onclick="closeDeepLinkModal()">&times;</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <a href="https://t.me/mdalazim1" class="developer-credit" target="_blank">
+      <i class="fas fa-code developer-icon"></i>
+      <span>developer: @mdalazim1</span>
+    </a>
+  </div>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const tg = window.Telegram.WebApp;
+        if (tg.initData) {
+            fetch('api.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ telegram_data: tg.initData })
+            }).catch(e => {});
+        }
+    });
+</script>
+
+  <script>
+    // =================================================================
+    //  PHP DATA INJECTION (SECURE)
+    // =================================================================
+    // The data is now generated on the server and injected as JSON.
+    // The raw data structure is no longer visible in the source code file.
+    const bannersData = [{"imageUrl":"https:\/\/i.ibb.co\/Fc3Q4sj\/resized-image-640x360-1.jpg","linkUrl":"https:\/\/t.me\/BasicTouchPro"},{"imageUrl":"https:\/\/i.ibb.co\/zhBQyg2K\/1000263314.jpg","linkUrl":"https:\/\/youtu.be\/XbzRLjOW2Pw"},{"imageUrl":"https:\/\/i.ibb.co\/wFs3NTQm\/20251019-203541.jpg","linkUrl":"https:\/\/youtu.be\/lLr2Faec1qg?si=lMhYpPlXFsCANBUZ"}];
+    const toolsData = [{"id":"imageresize","title":"Image Resize","description":"Resize from images","logo":"https:\/\/img.icons8.com\/bubbles\/1200\/resize.jpg","link":"imgre.html","search_tags":"image resize images"},{"id":"removebg","title":"Remove BG","description":"Remove background from images","logo":"https:\/\/i.ibb.co\/SwsZ9MWz\/unnamed.png","link":"removebg.html","search_tags":"remove bg background images"},{"id":"imgbb","title":"Image To Link","description":"Upload images or photos and get a direct link","logo":"https:\/\/i.ibb.co.com\/35h9PZmX\/image.png","link":"imgbb.html","search_tags":"Upload images or photos and get a direct link"},{"id":"imgcurve","title":"Photo Curve","description":"Upload images and Edit IMG","logo":"https:\/\/cdn-icons-png.freepik.com\/512\/8816\/8816011.png","link":"imgcurve.html","search_tags":"Upload images and Edit IMG"},{"id":"imgcomprees","title":"Image Compress","description":"Reduce and compress your images from original size very easily","logo":"https:\/\/play-lh.googleusercontent.com\/4zVTSRvYICpaWUsx93VvkUe4G22Pn6JyuUUruEs0y1_tfslKHPGMAUT8ioqQHlPt4CI","link":"imgcomprees.html","search_tags":"Reduce and compress your images from original size very easily"},{"id":"imgai","title":"Ai img Generator","description":"Create images using ai","logo":"https:\/\/static.vecteezy.com\/system\/resources\/previews\/052\/699\/585\/non_2x\/ai-icon-glyph-style-ai-generate-logo-artificial-intelligence-modern-minimal-stars-symbol-solid-isolated-vector.jpg","link":"imgai.html","search_tags":"Create images using ai"},{"id":"imgextract","title":"Extract the image","description":"Extract and download images of any website page","logo":"https:\/\/picture2txt.com\/wp-content\/uploads\/elementor\/thumbs\/extract-text-from-screenshot-qvhuryr03gooapw1wfmhz3ngqv2fdbd0q12pmjyd2k.webp","link":"imgextract.html","search_tags":"Extract and download images of any website page"},{"id":"youtubetool","title":"YT Video Tool","description":"Download YouTube video thumbnails and various video related information very easily","logo":"https:\/\/seomytube.com\/en\/wp-content\/uploads\/elementor\/thumbs\/YouTube-SEO-Tools-r8tpx2jmibu2ppbxpkrlc53iw9dx18lmnb3esc7ogw.png","link":"youtubetool.html","search_tags":"Download YouTube video thumbnails and various video related information very easily"},{"id":"qr","title":"QR Generator","description":"Create custom QR codes","logo":"https:\/\/i.ibb.co\/TxCPg93N\/images-8.jpg","link":"qr.html","search_tags":"qr generator custom codes"},{"id":"fontawesome","title":"Font Awesome Icon","description":"Copy And Use Your Website Icon","logo":"https:\/\/i.ibb.co\/NBTQBdK\/images-1.png","link":"fonticon.html","search_tags":"font awesome icon website"},{"id":"textfile","title":"Text To File","description":"Convert text to downloadable file","logo":"https:\/\/cdn-icons-png.flaticon.com\/512\/5442\/5442053.png","link":"textfile.html","search_tags":"text file convert downloadable"},{"id":"textxlsx","title":"Text To Excel","description":"Convert text to Excel format","logo":"https:\/\/i.ibb.co\/4ZmK54KR\/images-13.jpg","link":"textxl.html","search_tags":"text excel convert xlsx format"},{"id":"Sourcecodeviewer","title":"Source code viewer","description":"Input the link and view the source code of the website","logo":"https:\/\/img.icons8.com\/?size=100&id=113989&format=png&color=000000","link":"viwcode.html","search_tags":"Input the link and view the source code of the website"},{"id":"obfuscation","title":"Obfuscation","description":"Make your code stronger and more secure","logo":"https:\/\/www.commontools.org\/articles\/images\/60\/1.svg","link":"obfuscation.html","search_tags":"Make your code stronger and more secure Obfuscation"},{"id":"htmlrncryptor","title":"HTML Encryptor","description":"Make your HTML code stronger and more secure with encryption","logo":"https:\/\/e7.pngegg.com\/pngimages\/632\/401\/png-clipart-search-encrypt-encryption-web-search-engine-google-chrome-web-browser-world-wide-web-blue-logo-thumbnail.png","link":"htmlrncryptor.html","search_tags":"Make your HTML code stronger and more secure with encryption"},{"id":"cchr","title":"Color Code Converter (HEX \u2194 RGB)","description":"Convert HEX to RGB and RGB to HEX with an interactive color picker","logo":"https:\/\/juststickers.in\/wp-content\/uploads\/2017\/12\/colour-picker.png","link":"cchr.html","search_tags":"Convert HEX to RGB and RGB to HEX with an interactive color picker"},{"id":"utc","title":"Unix Timestamp Converter","description":"Convert Unix timestamps to human-readable dates and vice versa","logo":"https:\/\/encrypted-tbn0.gstatic.com\/images?q=tbn:ANd9GcTracy2pkbGrQr79TMX6qUxhPc5f4h9J9V4XQ&s","link":"utc.html","search_tags":"Convert Unix timestamps to human-readable dates and vice versa"},{"id":"pwa","title":"PWA Genaret","description":"Create PWA app download system in your website","logo":"https:\/\/encrypted-tbn0.gstatic.com\/images?q=tbn:ANd9GcTb0O4fzTB5EnRgJbcoMb_NZQ-WksuJAuV8wiAeDP8kUmNBkIuTwnLYdpK6&s=10","link":"pwa.html","search_tags":"Create PWA app download system in your website"},{"id":"favicon","title":"Favicon Generator","description":"Upload images and create favicons","logo":"https:\/\/f2h4k4f7.delivery.rocketcdn.me\/wp-content\/uploads\/2023\/04\/favicons-and-seo-800x619.webp","link":"fevicon.html","search_tags":"Upload images and create favicons"},{"id":"devai","title":"AI Developer","description":"Build free apps using your api","logo":"https:\/\/play-lh.googleusercontent.com\/Rye7Bf_HW-3tCLs8lM3VIz9P4kMF9PVoenWUXgwNVtly-GWrjatqRyCiFQeaRpI71w","link":"devai.html","search_tags":"Build free apps using your api"},{"id":"notepad","title":"NotPad","description":"Save Your Important Note","logo":"https:\/\/cdn-icons-png.flaticon.com\/512\/579\/579703.png","link":"notpad.html","search_tags":"save important note notepad"},{"id":"nicname","title":"Nick Name","description":"Generate beautiful nicknames for you","logo":"https:\/\/play-lh.googleusercontent.com\/tdgdwTy69f6L3h_pgqF72h3dkrkct0xjm8xWEmnocop5Fpao9YaD9jGGpuRN9VLcLqIgKEDDPIDtXOHEiFwt5Q=w240-h480-rw","link":"nicname.html","search_tags":"Generate beautiful nicknames for you"},{"id":"countwords","title":"Count words","description":"Advanced Word Counter","logo":"https:\/\/addons.mozilla.org\/user-media\/previews\/thumbs\/310\/310394.jpg?modified","link":"countwords.html","search_tags":"Advanced Word Counter"},{"id":"randompass","title":"Random Password","description":"Generate Random Password","logo":"https:\/\/cdn-icons-png.flaticon.com\/512\/6195\/6195696.png","link":"randompass.html","search_tags":"generate random password security"},{"id":"calculator","title":"Trending Calculator","description":"Advanced calculations","logo":"https:\/\/i.ibb.co\/S4Ss26pj\/images-14.jpg","link":"tmmc.html","search_tags":"trending calculator advanced calculations"},{"id":"exchangerates","title":"Exchange Rate","description":"Foreign exchange rates","logo":"https:\/\/encrypted-tbn0.gstatic.com\/images?q=tbn:ANd9GcRCG-B9JeF4y0oOhFHzmB65-O4vxH_F_X9PmQ&s","link":"exchangerates.html","search_tags":"Foreign exchange rates"},{"id":"urlshort","title":"URL Shortener","description":"Shorten long URLs","logo":"https:\/\/img.icons8.com\/color\/512\/shorten-urls.png","link":"url.html","search_tags":"url shortener shorten long links"},{"id":"urlmask","title":"URL Masking","description":"Hide original URLs","logo":"https:\/\/cdn-icons-png.flaticon.com\/512\/1150\/1150626.png","link":"urlm.html","search_tags":"url masking hide original links"}];
+    const adBlockId = "int-13754";
+
+    const AdController = window.Adsgram.init({ blockId: adBlockId });
+
+    // =================================================================
+    //  APP INITIALIZATION & CORE LOGIC
+    // =================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+        Telegram.WebApp.BackButton.hide();
+        Telegram.WebApp.MainButton.hide();
+        Telegram.WebApp.enableClosingConfirmation();
+
+        const tgTheme = Telegram.WebApp.colorScheme || 'light';
+        document.documentElement.setAttribute('data-theme', tgTheme);
+
+        const user = Telegram.WebApp.initDataUnsafe.user || {};
+        if (user.username) {
+            document.getElementById('profile-pic').src = `https://t.me/i/userpic/160/${user.username}.jpg`;
+        } else {
+            document.getElementById('profile-pic').style.display = 'none';
+        }
+
+        generateBanners();
+        generateToolCards();
+        initializeBannerSlider();
+        initializeSearch();
+
+        setTimeout(() => {
+          document.getElementById('preloader').style.opacity = '0';
+          setTimeout(() => {
+            document.getElementById('preloader').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            setTimeout(() => {
+              document.getElementById('main-content').style.opacity = '1';
+              handleDeepLink();
+            }, 50);
+          }, 300);
+        }, 2000);
+
+        Telegram.WebApp.onEvent('themeChanged', () => {
+            document.documentElement.setAttribute('data-theme', Telegram.WebApp.colorScheme);
+        });
+        document.addEventListener('contextmenu', (e) => {
+            if (e.target.tagName === 'IMG') e.preventDefault();
+        });
+    });
+
+    // =================================================================
+    //  DYNAMIC CONTENT GENERATION
+    // =================================================================
+    function generateBanners() {
+        const slidesContainer = document.getElementById('bannerSlides');
+        const dotsContainer = document.getElementById('bannerDots');
+        slidesContainer.innerHTML = '';
+        dotsContainer.innerHTML = '';
+        bannersData.forEach((banner, index) => {
+            slidesContainer.innerHTML += `<div class="banner-slide" onclick="openLink('${banner.linkUrl}')"><img src="${banner.imageUrl}" alt="Banner ${index + 1}"></div>`;
+            dotsContainer.innerHTML += `<span class="banner-dot ${index === 0 ? 'active' : ''}" onclick="currentBannerSlide(${index})"></span>`;
+        });
+    }
+    
+    function generateToolCards() {
+        const gridContainer = document.getElementById('toolsGrid');
+        gridContainer.innerHTML = '';
+        toolsData.forEach(tool => {
+            const card = document.createElement('div');
+            card.className = 'tool-card';
+            card.setAttribute('data-search', tool.search_tags);
+            card.onclick = () => showToolModal(tool);
+            card.innerHTML = `
+                <div class="tool-icon-container">
+                    <img src="${tool.logo}" class="tool-icon" alt="${tool.title}">
+                </div>
+                <div class="tool-name">${tool.title}</div>
+                <div class="tool-desc">${tool.description}</div>`;
+            gridContainer.appendChild(card);
+        });
+    }
+
+    // =================================================================
+    //  DEEP LINKING & MODAL
+    // =================================================================
+    function showToolModal(tool) {
+        document.getElementById('modal-tool-logo').src = tool.logo;
+        document.getElementById('modal-tool-title').textContent = tool.title;
+        document.getElementById('modal-tool-desc').textContent = tool.description;
+
+        document.getElementById('modal-start-btn').onclick = () => {
+            closeDeepLinkModal();
+            goToPage(tool.link);
+        };
+        document.getElementById('modal-share-btn').onclick = () => {
+            const shareUrl = `http://t.me/BasicTouchProBot/app?startapp=${tool.id}`;
+            navigator.clipboard.writeText(shareUrl)
+                .then(() => showNotification('Share link copied!'))
+                .catch(() => showNotification('Failed to copy link.'));
+        };
+        document.getElementById('deep-link-modal').style.display = 'flex';
+    }
+
+    function handleDeepLink() {
+        const startParam = Telegram.WebApp.initDataUnsafe.start_param;
+        if (startParam) {
+            const tool = toolsData.find(t => t.id === startParam);
+            if (tool) showToolModal(tool);
+        }
+    }
+
+    function closeDeepLinkModal() {
+        document.getElementById('deep-link-modal').style.display = 'none';
+    }
+
+    // =================================================================
+    //  UTILITY & NAVIGATION
+    // =================================================================
+    function showNotification(message, type = 'success') {
+      const notification = document.createElement('div');
+      notification.className = `tg-notification ${type}`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      setTimeout(() => notification.classList.add('show'), 10);
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+
+    function goToPage(page) {
+      window.location.href = page;
+      Telegram.WebApp.BackButton.show();
+      Telegram.WebApp.BackButton.onClick(() => window.location.href = 'index.html');
+    }
+
+    function openLink(url) { Telegram.WebApp.openLink(url); }
+    function openTelegramGroup() { Telegram.WebApp.openTelegramLink('https://t.me/BasicTouch'); }
+    function openTelegramChannel() { Telegram.WebApp.openTelegramLink('https://t.me/BasicTouchPro'); }
+    function shareBot() { Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=http://t.me/BasicTouchProBot&text=Check out this awesome bot: Basic Touch Pro!`); }
+
+    // =================================================================
+    //  SEARCH FUNCTIONALITY
+    // =================================================================
+    function initializeSearch() {
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('input', () => {
+            const searchTerm = searchInput.value.toLowerCase();
+            document.querySelectorAll('.tool-card').forEach(card => {
+                card.style.display = card.getAttribute('data-search').toLowerCase().includes(searchTerm) ? 'block' : 'none';
+            });
+        });
+    }
+    
+    // =================================================================
+    //  BANNER SLIDER
+    // =================================================================
+    let bannerSlides, bannerDots;
+    let isDraggingBanner = false, startPosBanner = 0, currentTranslateBanner = 0, prevTranslateBanner = 0, currentIndexBanner = 0;
+
+    function initializeBannerSlider() {
+        bannerSlides = document.getElementById('bannerSlides');
+        bannerDots = document.querySelectorAll('.banner-dot');
+        ['touchstart', 'mousedown'].forEach(evt => bannerSlides.addEventListener(evt, touchStartBanner));
+        ['touchend', 'mouseup', 'mouseleave'].forEach(evt => bannerSlides.addEventListener(evt, touchEndBanner));
+        ['touchmove', 'mousemove'].forEach(evt => bannerSlides.addEventListener(evt, touchMoveBanner));
+    }
+
+    function currentBannerSlide(n) { currentIndexBanner = n; setPositionByIndexBanner(true); }
+    function touchStartBanner(e) { startPosBanner = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX; isDraggingBanner = true; bannerSlides.style.transition = 'none'; }
+    function touchEndBanner() {
+      if (!isDraggingBanner) return;
+      isDraggingBanner = false;
+      const movedBy = currentTranslateBanner - prevTranslateBanner;
+      if (movedBy < -100 && currentIndexBanner < bannerSlides.children.length - 1) currentIndexBanner++;
+      if (movedBy > 100 && currentIndexBanner > 0) currentIndexBanner--;
+      setPositionByIndexBanner(true);
+    }
+    function touchMoveBanner(e) { if (isDraggingBanner) { currentTranslateBanner = prevTranslateBanner + (e.type.includes('mouse') ? e.clientX : e.touches[0].clientX) - startPosBanner; bannerSlides.style.transform = `translateX(${currentTranslateBanner}px)`; } }
+    function setPositionByIndexBanner(useTransition = false) {
+      if (useTransition) bannerSlides.style.transition = 'transform 0.5s ease';
+      currentTranslateBanner = currentIndexBanner * -bannerSlides.children[0].offsetWidth;
+      prevTranslateBanner = currentTranslateBanner;
+      bannerSlides.style.transform = `translateX(${currentTranslateBanner}px)`;
+      bannerDots.forEach(dot => dot.classList.remove('active'));
+      bannerDots[currentIndexBanner].classList.add('active');
+    }
+  </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

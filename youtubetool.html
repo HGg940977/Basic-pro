@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Info Pro - @BasicTouchPro</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --tg-bg: #ffffff; --tg-text: #000000; --tg-sec: #707579;
+            --tg-border: #e0e0e0; --tg-blue: #0088cc; --tg-card: #f8f9fa;
+        }
+        [data-theme="dark"] {
+            --tg-bg: #17212b; --tg-text: #e1e3e6; --tg-sec: #a8b2bb;
+            --tg-border: #2c3a48; --tg-card: #232f3d;
+        }
+        body { font-family: -apple-system, sans-serif; background: var(--tg-bg); color: var(--tg-text); margin: 0; padding: 0; }
+        
+        .header {
+            padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--tg-border); background: var(--tg-bg); position: sticky; top: 0; z-index: 100;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo img { width: 32px; height: 32px; border-radius: 5px; }
+        .logo-text { font-weight: bold; font-size: 18px; color: var(--tg-blue); }
+        .profile { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--tg-blue); cursor: pointer; object-fit: cover; }
+
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        
+        .search-box { display: flex; gap: 10px; background: var(--tg-card); padding: 5px; border-radius: 12px; border: 1px solid var(--tg-border); margin-bottom: 20px; }
+        .search-box input { flex: 1; border: none; background: transparent; padding: 10px; color: var(--tg-text); outline: none; font-size: 15px; }
+        .btn-fetch { background: var(--tg-blue); color: #fff; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        .card { background: var(--tg-card); border-radius: 15px; padding: 15px; border: 1px solid var(--tg-border); margin-bottom: 15px; }
+        .info-label { font-size: 11px; color: var(--tg-sec); text-transform: uppercase; letter-spacing: 0.5px; font-weight: bold; }
+        .info-content { margin-top: 5px; font-size: 14px; position: relative; color: var(--tg-text); padding-right: 35px; }
+        
+        .copy-btn { position: absolute; right: 0; top: 0; color: var(--tg-blue); cursor: pointer; padding: 5px; font-size: 18px; }
+
+        .thumb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+        .thumb-item { text-align: center; background: var(--tg-bg); padding: 10px; border-radius: 12px; border: 1px solid var(--tg-border); }
+        .thumb-item img { width: 100%; border-radius: 8px; margin-bottom: 8px; }
+        .res-tag { font-size: 10px; font-weight: bold; color: var(--tg-sec); display: block; margin-bottom: 5px; }
+        .dl-btn { 
+            width: 100%; border: none; background: var(--tg-blue); color: white; 
+            padding: 10px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer;
+        }
+
+        #result-area { display: none; }
+        #loader { display: none; text-align: center; padding: 40px; color: var(--tg-blue); }
+    </style>
+</head>
+<body>
+
+    <!-- Header Section -->
+    <div class="header">
+      <div class="logo">
+        <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png" alt="Logo">
+        <div class="logo-text">Basic Touch Pro</div>
+      </div>
+      <img id="profile-pic" class="profile" src="" onclick="window.location.href='tg.html'">
+    </div>
+
+    <div class="container">
+        <h3>YouTube Thumbnail & Metadata</h3>
+        
+        <!-- URL Input Section -->
+        <div class="search-box">
+            <input type="text" id="videoUrl" placeholder="Paste YouTube video link...">
+            <button class="btn-fetch" id="fetchBtn">FETCH</button>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loader"><i class="fas fa-spinner fa-spin fa-3x"></i></div>
+
+        <!-- Result Section -->
+        <div id="result-area">
+            
+            <!-- Information Metadata Card -->
+            <div class="card">
+                <div class="info-label">Title</div>
+                <div class="info-content">
+                    <span id="res-title"></span>
+                    <i class="fas fa-copy copy-btn" onclick="copyText('res-title')"></i>
+                </div>
+
+                <div style="margin-top: 15px;" class="info-label">Tags / Keywords</div>
+                <div class="info-content" style="font-size: 12px; color: var(--tg-sec); max-height: 50px; overflow-y: auto;">
+                    <span id="res-tags"></span>
+                    <i class="fas fa-copy copy-btn" onclick="copyText('res-tags')"></i>
+                </div>
+
+                <div style="margin-top: 15px;" class="info-label">Video Description</div>
+                <div class="info-content" style="font-size: 12px; color: var(--tg-sec); max-height: 100px; overflow-y: auto;">
+                    <span id="res-desc"></span>
+                    <i class="fas fa-copy copy-btn" onclick="copyText('res-desc')"></i>
+                </div>
+            </div>
+
+            <!-- Resolution & Download Card -->
+            <div class="card">
+                <div class="info-label">Select Resolution to Send to Bot</div>
+                <div class="thumb-grid" id="thumb-container">
+                    <!-- Thumbnail Items will appear here via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        // Back Button Fix
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => window.location.href = "index.html");
+
+        // Theme sync
+        function applyTheme() { document.documentElement.setAttribute('data-theme', tg.colorScheme); }
+        tg.onEvent('themeChanged', applyTheme);
+        applyTheme();
+
+        // User profile
+        const user = tg.initDataUnsafe.user || {};
+        document.getElementById('profile-pic').src = user.username ? `https://t.me/i/userpic/160/${user.username}.jpg` : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+
+        const fetchBtn = document.getElementById('fetchBtn');
+        const videoInput = document.getElementById('videoUrl');
+        const loader = document.getElementById('loader');
+        const resultArea = document.getElementById('result-area');
+
+        // Fetch YouTube Info Logic
+        fetchBtn.onclick = async () => {
+            const url = videoInput.value.trim();
+            if(!url) { tg.showAlert("Please enter a URL!"); return; }
+
+            loader.style.display = 'block';
+            resultArea.style.display = 'none';
+
+            try {
+                const response = await fetch(`${window.location.pathname}?fetch_info=1&url=${encodeURIComponent(url)}`);
+                const data = await response.json();
+
+                if(data.ok) {
+                    document.getElementById('res-title').innerText = data.title;
+                    document.getElementById('res-tags').innerText = data.tags;
+                    document.getElementById('res-desc').innerText = data.description;
+                    
+                    const container = document.getElementById('thumb-container');
+                    container.innerHTML = '';
+
+                    // Resolution display integration
+                    data.thumbnails.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'thumb-item';
+                        div.innerHTML = `
+                            <img src="${item.url}">
+                            <span class="res-tag">RESOLUTION: ${item.res}</span>
+                            <button class="dl-btn" onclick="sendToTelegram('${item.url}', '${data.title.replace(/'/g, "")}', this)">SEND TO BOT</button>
+                        `;
+                        container.appendChild(div);
+                    });
+
+                    resultArea.style.display = 'block';
+                    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                } else {
+                    tg.showAlert(data.error);
+                }
+            } catch(e) { tg.showAlert("Server Connection Failed!"); }
+            finally { loader.style.display = 'none'; }
+        };
+
+        // Send to Telegram & Auto Close App Logic
+        async function sendToTelegram(imgUrl, title, btn) {
+            btn.disabled = true;
+            btn.innerText = "SENDING...";
+
+            const formData = new FormData();
+            formData.append('send_tg', '1');
+            formData.append('chat_id', user.id || '');
+            formData.append('image_url', imgUrl);
+            formData.append('title', title);
+
+            try {
+                const res = await fetch(window.location.pathname, {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await res.json();
+                if(result.ok) {
+                    tg.showAlert("Thumbnail sent successfully! Closing app...", () => {
+                        tg.close(); // Close the Telegram Web App
+                    });
+                } else {
+                    tg.showAlert("Failed to send thumbnail.");
+                }
+            } catch(e) { tg.showAlert("Network error!"); }
+            finally {
+                btn.disabled = false;
+                btn.innerText = "SEND TO BOT";
+            }
+        }
+
+        // One-Click Copy Function
+        function copyText(id) {
+            const text = document.getElementById(id).innerText;
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            tg.showAlert("Copied to clipboard! ✅");
+        }
+    </script>
+    
+    <!-- Include Ads File -->
+    
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const AdController = window.Adsgram.init({ blockId: "int-19383" });
+
+        AdController.show().then((result) => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                
+                setTimeout(() => {
+                    window.Telegram.WebApp.showAlert('Thanks for support 💝');
+                }, 200);
+            }
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

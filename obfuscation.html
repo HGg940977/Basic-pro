@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Obfuscator Pro - @BasicTouchPro</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --tg-bg: #ffffff; --tg-text: #000000; --tg-sec: #707579;
+            --tg-border: #e0e0e0; --tg-blue: #0088cc; --tg-card: #f8f9fa;
+        }
+        [data-theme="dark"] {
+            --tg-bg: #17212b; --tg-text: #e1e3e6; --tg-sec: #a8b2bb;
+            --tg-border: #2c3a48; --tg-card: #232f3d;
+        }
+        body { font-family: -apple-system, sans-serif; background: var(--tg-bg); color: var(--tg-text); margin: 0; padding: 0; }
+        
+        .header {
+            padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--tg-border); background: var(--tg-bg); position: sticky; top:0; z-index:100;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo img { width: 32px; height: 32px; border-radius: 5px; }
+        .logo-text { font-weight: bold; font-size: 18px; color: var(--tg-blue); }
+        .profile { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--tg-blue); cursor: pointer; object-fit: cover; }
+
+        .container { max-width: 550px; margin: 0 auto; padding: 20px; }
+        
+        .tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+        .tab-btn { flex: 1; padding: 12px; border: 2px solid var(--tg-blue); background: transparent; color: var(--tg-blue); border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .tab-btn.active { background: var(--tg-blue); color: #fff; }
+
+        .card { background: var(--tg-card); border-radius: 15px; padding: 20px; border: 1px solid var(--tg-border); margin-bottom: 15px; transition: 0.3s; }
+        
+        /* Drag & Drop Styles */
+        .upload-area {
+            border: 2px dashed var(--tg-border);
+            border-radius: 12px; padding: 20px; text-align: center;
+            cursor: pointer; transition: 0.3s; margin-bottom: 15px;
+            background: var(--tg-bg);
+        }
+        .upload-area:hover, .upload-area.dragover { border-color: var(--tg-blue); background: rgba(0, 136, 204, 0.05); }
+        .upload-area i { font-size: 30px; color: var(--tg-blue); margin-bottom: 10px; }
+        .upload-area p { font-size: 13px; color: var(--tg-sec); margin: 0; }
+
+        label { font-size: 12px; color: var(--tg-sec); font-weight: bold; margin-bottom: 8px; display: block; }
+        
+        textarea, input[type="text"] { 
+            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--tg-border); 
+            background: var(--tg-bg); color: var(--tg-text); outline: none; transition: 0.3s; box-sizing: border-box; font-family: monospace; font-size: 13px;
+        }
+        textarea:focus, input[type="text"]:focus { border-color: var(--tg-blue); box-shadow: 0 0 8px rgba(0, 136, 204, 0.2); }
+        textarea { height: 180px; resize: none; }
+
+        .btn-row { display: flex; gap: 10px; margin-top: 10px; }
+        .btn { flex: 1; background: var(--tg-blue); color: #fff; border: none; padding: 14px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s; }
+        .btn:active { transform: scale(0.98); }
+        .btn-clear { background: #ff4444; flex: 0.4; }
+        
+        #result-box { display: none; }
+        .btn-copy { background: #444; margin-top: 10px; font-size: 13px; width: 100%; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+      <div class="logo">
+        <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png">
+        <div class="logo-text">Basic Touch Pro</div>
+      </div>
+      <img id="profile-pic" class="profile" src="" onclick="window.location.href='tg.html'">
+    </div>
+
+    <div class="container">
+        <h3><i class="fas fa-shield-halved"></i> Code Obfuscator</h3>
+        
+        <div class="tabs">
+            <button class="tab-btn active" id="tabJS" onclick="switchTab('js')"><i class="fab fa-js"></i> JS</button>
+            <button class="tab-btn" id="tabCSS" onclick="switchTab('css')"><i class="fab fa-css3-alt"></i> CSS</button>
+        </div>
+
+        <div class="card">
+            <label id="inputLabel">Upload or Paste JavaScript Code:</label>
+            
+            <!-- File Upload Area -->
+            <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-cloud-arrow-up"></i>
+                <p id="uploadText">Drag & Drop file or click to upload</p>
+                <input type="file" id="fileInput" style="display:none">
+            </div>
+
+            <textarea id="mainInput" placeholder="Paste your code here..."></textarea>
+            
+            <div class="btn-row">
+                <button class="btn" onclick="generateObfuscation()"><i class="fas fa-magic"></i> OBFUSCATE</button>
+                <button class="btn btn-clear" onclick="clearInputs()"><i class="fas fa-trash-can"></i> CLEAR</button>
+            </div>
+        </div>
+
+        <div id="result-box" class="card">
+            <label><i class="fas fa-check-circle"></i> Protected Code Output:</label>
+            <textarea id="resultOutput" readonly></textarea>
+            <button class="btn btn-copy" onclick="copyResult()"><i class="fas fa-copy"></i> COPY & RELOAD</button>
+        </div>
+
+        <div class="card">
+            <label><i class="fas fa-file-signature"></i> Project Name (Bundle)</label>
+            <input type="text" id="fileName" placeholder="e.g. secured_script">
+            <button class="btn" style="width: 100%;" id="dlBtn" onclick="downloadBundle()"><i class="fas fa-download"></i> DOWNLOAD (ZIP TO TG)</button>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => window.location.href = "index.html");
+
+        const user = tg.initDataUnsafe.user || {};
+        document.getElementById('profile-pic').src = user.username ? `https://t.me/i/userpic/160/${user.username}.jpg` : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+        document.documentElement.setAttribute('data-theme', tg.colorScheme);
+
+        let currentTab = 'js';
+
+        window.onload = () => {
+            document.getElementById('mainInput').value = localStorage.getItem('bt_obf_js') || '';
+            updateUploadLabel();
+        };
+
+        function switchTab(tab) {
+            localStorage.setItem(`bt_obf_${currentTab}`, document.getElementById('mainInput').value);
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tab === 'js' ? 'tabJS' : 'tabCSS').classList.add('active');
+            
+            document.getElementById('inputLabel').innerText = `Upload or Paste ${tab.toUpperCase()} Code:`;
+            document.getElementById('mainInput').value = localStorage.getItem(`bt_obf_${tab}`) || '';
+            document.getElementById('result-box').style.display = 'none';
+            updateUploadLabel();
+        }
+
+        function updateUploadLabel() {
+            const ext = currentTab === 'js' ? '.js' : '.css';
+            document.getElementById('uploadText').innerText = `Drag & Drop ${ext} file or click to upload`;
+            document.getElementById('fileInput').accept = ext;
+        }
+
+        // --- File Upload Logic ---
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        ['dragenter', 'dragover'].forEach(e => {
+            dropZone.addEventListener(e, (ev) => { ev.preventDefault(); dropZone.classList.add('dragover'); });
+        });
+        ['dragleave', 'drop'].forEach(e => {
+            dropZone.addEventListener(e, (ev) => { ev.preventDefault(); dropZone.classList.remove('dragover'); });
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
+
+        function handleFiles(files) {
+            if (files.length === 0) return;
+            const file = files[0];
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('mainInput').value = e.target.result;
+                tg.showAlert(`File "${file.name}" loaded successfully! ✅`);
+                if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            };
+            reader.readAsText(file);
+        }
+
+        // --- Core Logic ---
+        function utf8_to_b64(str) {
+            return window.btoa(unescape(encodeURIComponent(str)));
+        }
+
+        function cleanCode(code) {
+            return code.replace(/\/\*[\s\S]*?\*\/|([^:]|^)\/\/.*$/gm, "").trim();
+        }
+
+        function clearInputs() {
+            document.getElementById('mainInput').value = "";
+            localStorage.removeItem(`bt_obf_${currentTab}`);
+            localStorage.removeItem(`bt_obf_${currentTab}_result`);
+            document.getElementById('result-box').style.display = 'none';
+            tg.showAlert("Input cleared!");
+        }
+
+        function generateObfuscation() {
+            let code = document.getElementById('mainInput').value.trim();
+            if(!code) { tg.showAlert("Please provide some code first!"); return; }
+            
+            code = cleanCode(code);
+            const credit = "/* Protected by @BasicTouchPro */\n";
+
+            try {
+                let result = "";
+                if(currentTab === 'js') {
+                    const b64 = utf8_to_b64(code);
+                    result = credit + `eval(atob('${b64}'));`;
+                } else {
+                    result = credit + code.replace(/\s+/g, " ");
+                }
+
+                document.getElementById('resultOutput').value = result;
+                document.getElementById('result-box').style.display = 'block';
+                
+                localStorage.setItem(`bt_obf_${currentTab}_result`, result);
+                if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                window.scrollTo({ top: document.getElementById('result-box').offsetTop, behavior: 'smooth' });
+            } catch (e) {
+                tg.showAlert("Obfuscation failed!");
+            }
+        }
+
+        function copyResult() {
+            const res = document.getElementById('resultOutput');
+            res.select();
+            document.execCommand('copy');
+            tg.showAlert("Protected Code Copied! Page will reload.", () => {
+                localStorage.clear();
+                location.reload();
+            });
+        }
+
+        async function downloadBundle() {
+            localStorage.setItem(`bt_obf_${currentTab}`, document.getElementById('mainInput').value);
+            const btn = document.getElementById('dlBtn');
+            const jsRes = localStorage.getItem('bt_obf_js_result') || "";
+            const cssRes = localStorage.getItem('bt_obf_css_result') || "";
+            const fileName = document.getElementById('fileName').value.trim();
+
+            if(!jsRes && !cssRes) {
+                tg.showAlert("Please obfuscate your code first!");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> SENDING...";
+
+            const fd = new FormData();
+            fd.append('action', 'process_download');
+            fd.append('chat_id', user.id || '');
+            fd.append('js_code', jsRes);
+            fd.append('css_code', cssRes);
+            fd.append('file_name', fileName);
+
+            try {
+                const res = await fetch(window.location.href, { method: 'POST', body: fd });
+                const data = await res.json();
+                if(data.ok) {
+                    tg.showAlert("ZIP Bundle sent to Telegram! Page will reload.", () => {
+                        localStorage.clear();
+                        location.reload();
+                    });
+                }
+            } catch(e) {
+                tg.showAlert("Connection error!");
+                btn.disabled = false;
+                btn.innerHTML = "DOWNLOAD (ZIP TO TG)";
+            }
+        }
+    </script>
+    
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const AdController = window.Adsgram.init({ blockId: "int-19383" });
+
+        AdController.show().then((result) => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                
+                setTimeout(() => {
+                    window.Telegram.WebApp.showAlert('Thanks for support 💝');
+                }, 200);
+            }
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

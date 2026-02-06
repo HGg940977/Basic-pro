@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Touch Pro - URL Shortener</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+       <style>
+        :root {
+            --telegram-bg: #ffffff;
+            --telegram-text: #000000;
+            --telegram-secondary: #707579;
+            --telegram-card: #ffffff;
+            --telegram-border: #e0e0e0;
+            --telegram-blue: #0088cc;
+            --telegram-green: #2eab5d;
+            --telegram-red: #ff3b30;
+            --telegram-purple: #9b59b6;
+            --telegram-orange: #ff9500;
+            --telegram-light: #ebedf0;
+            --telegram-focus: rgba(0, 136, 204, 0.2);
+        }
+
+        [data-theme="dark"] {
+            --telegram-bg: #17212b;
+            --telegram-text: #e1e3e6;
+            --telegram-secondary: #a8b2bb;
+            --telegram-card: #232f3d;
+            --telegram-border: #2c3a48;
+            --telegram-light: #2b5278;
+            --telegram-focus: rgba(0, 136, 204, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        body {
+            background-color: var(--telegram-bg);
+            color: var(--telegram-text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+        }
+
+        /* Header Styles */
+        .header {
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--telegram-border);
+            background-color: var(--telegram-card);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo img {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+        }
+
+        .logo-text {
+            font-weight: bold;
+            font-size: 18px;
+            color: var(--telegram-blue);
+        }
+
+        .profile {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            background-color: var(--telegram-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .profile:hover {
+            transform: scale(1.05);
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        
+        .shortener-container {
+            width: 100%;
+            background: var(--telegram-card);
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            border: 1px solid var(--telegram-border);
+            margin-bottom: 20px;
+        }
+        
+        [data-theme="dark"] .shortener-container {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .shortener-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .input-group label {
+            font-weight: 600;
+            color: var(--telegram-blue);
+            font-size: 1.1rem;
+            display: block;
+            margin-bottom: 0.8rem;
+        }
+        
+        .input-field {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .input-field input {
+            flex: 1;
+            padding: 1rem 1.2rem;
+            border: 2px solid var(--telegram-border);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background-color: var(--telegram-card);
+            color: var(--telegram-text);
+        }
+        
+        .input-field input:focus {
+            border-color: var(--telegram-blue);
+            outline: none;
+            box-shadow: 0 0 0 4px var(--telegram-focus);
+        }
+        
+        .btn {
+            padding: 1rem 1.8rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--telegram-blue);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0077b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+        }
+        
+        .result-container {
+            display: none;
+            margin-top: 1.5rem;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .result-box {
+            display: flex;
+            align-items: center;
+            background-color: var(--telegram-bg);
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid var(--telegram-border);
+        }
+        
+        .result-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            font-size: 1rem;
+            color: var(--telegram-text);
+            padding: 0.5rem 1rem;
+        }
+        
+        .copy-btn {
+            background-color: var(--telegram-green);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.8rem 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .copy-btn:hover {
+            background-color: #269952;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--telegram-green);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .history-container {
+            width: 100%;
+            background: var(--telegram-card);
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            border: 1px solid var(--telegram-border);
+            margin-top: 20px;
+        }
+
+        [data-theme="dark"] .history-container {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .history-title {
+            font-weight: 600;
+            color: var(--telegram-blue);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            border-radius: 8px;
+            background-color: var(--telegram-bg);
+            border: 1px solid var(--telegram-border);
+        }
+
+        .history-url {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--telegram-text);
+            font-size: 0.9rem;
+        }
+
+        .history-short {
+            color: var(--telegram-blue);
+            font-size: 0.9rem;
+            margin-left: 1rem;
+            text-decoration: none;
+        }
+
+        .history-short:hover {
+            text-decoration: underline;
+        }
+
+        .history-time {
+            color: var(--telegram-secondary);
+            font-size: 0.8rem;
+            margin-left: 1rem;
+            white-space: nowrap;
+        }
+
+        .empty-history {
+            color: var(--telegram-secondary);
+            text-align: center;
+            padding: 1rem;
+            font-size: 0.9rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @media (max-width: 600px) {
+            .input-field {
+                flex-direction: column;
+            }
+            
+            .shortener-container {
+                padding: 1rem;
+            }
+
+            .history-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .history-short, .history-time {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png" alt="Logo">
+            <div class="logo-text">Basic Touch Pro</div>
+        </div>
+        <img id="profile-pic" class="profile" src="" alt="Profile" onclick="goToPage('tg.html')">
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- URL Shortener -->
+        <div class="shortener-container">
+            <form class="shortener-form" id="urlForm">
+                <div class="input-group">
+                    <label for="url">Paste your long URL</label>
+                    <div class="input-field">
+                        <input type="url" id="url" placeholder="https://example.com/very-long-url..." required>
+                        <button type="submit" class="btn btn-primary" id="shortenBtn">
+                            <i class="fas fa-compress-alt"></i> Shorten
+                        </button>
+                    </div>
+                </div>
+            </form>
+            
+            <div class="result-container" id="resultContainer">
+                <div class="result-box">
+                    <input type="text" id="shortUrl" readonly>
+                    <button class="copy-btn" id="copyBtn">
+                        <i class="far fa-copy"></i> Copy
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- History Section -->
+        <div class="history-container">
+            <div class="history-title">
+                <i class="fas fa-history"></i>
+                <span>Recent Shortened URLs</span>
+            </div>
+            <div class="history-list" id="historyList">
+                <!-- History items will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <span>URL copied to clipboard!</span>
+    </div>
+
+<script>
+  function goToPage(page) {
+  window.location.href = page;
+}
+</script>
+    
+    <script>
+        // CLIENT SIDE LOGIC
+        // Sensitive data has been removed from here
+        const HISTORY_LIMIT = 10;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('urlForm');
+            const shortenBtn = document.getElementById('shortenBtn');
+            const resultContainer = document.getElementById('resultContainer');
+            const shortUrlInput = document.getElementById('shortUrl');
+            const copyBtn = document.getElementById('copyBtn');
+            const notification = document.getElementById('notification');
+            const historyList = document.getElementById('historyList');
+            const profilePic = document.getElementById('profile-pic');
+            
+            // Initialize Telegram WebApp
+            if (window.Telegram && Telegram.WebApp) {
+                Telegram.WebApp.ready();
+                
+                // Handle back button
+                Telegram.WebApp.BackButton.show();
+                Telegram.WebApp.BackButton.onClick(() => {
+                    window.location.href = "index.html"; // Redirect to PHP index
+                });
+                
+                // Set theme based on Telegram
+                updateTheme();
+                
+                // Listen for theme changes
+                Telegram.WebApp.onEvent('themeChanged', updateTheme);
+                
+                // Load user profile
+                loadUserProfile();
+            }
+            
+            // Load history from localStorage
+            loadHistory();
+            
+            function updateTheme() {
+                if (Telegram.WebApp.colorScheme === 'dark') {
+                    document.body.setAttribute('data-theme', 'dark');
+                } else {
+                    document.body.removeAttribute('data-theme');
+                }
+            }
+            
+            function loadUserProfile() {
+                const user = Telegram.WebApp.initDataUnsafe.user || {};
+                const username = user.username || 'user';
+                const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Telegram User';
+                const profilePicUrl = `https://t.me/i/userpic/160/${username}.jpg`;
+                
+                // Set profile picture
+                if (user.photo_url) {
+                    profilePic.src = user.photo_url;
+                } else if (username !== 'user') {
+                    profilePic.src = profilePicUrl;
+                } else {
+                    // Fallback to initials
+                    profilePic.innerHTML = fullName.charAt(0).toUpperCase();
+                    profilePic.style.backgroundColor = getRandomColor();
+                }
+                
+                // Add tooltip with full name
+                profilePic.title = fullName;
+            }
+            
+            function getRandomColor() {
+                const colors = [
+                    '#FF6584', '#4D44DB', '#6C63FF', '#0088cc', 
+                    '#2eab5d', '#ff3b30', '#9b59b6', '#ff9500'
+                ];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+            
+            // TinyURL API function (SERVER SIDE PROXY)
+            async function shortenUrl(longUrl) {
+                try {
+                    // SECURE CHANGE: We call the PHP script on the same server
+                    const response = await fetch(window.location.href, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            action: 'shorten_url',
+                            url: longUrl
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to shorten URL');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.errors && data.errors.length > 0) {
+                        throw new Error(data.errors[0]);
+                    }
+
+                    return data.data.tiny_url;
+                } catch (error) {
+                    console.error('Error:', error);
+                    throw error;
+                }
+            }
+            
+            // Send message to user via bot (SERVER SIDE PROXY)
+            async function sendTelegramMessage(userId, fullName, originalUrl, shortUrl) {
+                if (!userId) return;
+                
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                const dateString = now.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
+                
+                const message = `
+${fullName} congratulations your link has been short successful 🤗
+
+Your link: ${originalUrl}
+Short Link: ${shortUrl}
+Time: ${timeString} ${dateString}
+
+🤫 আরো বেশি লিংক শর্ট করুন এবং বন্ধুদের শেয়ার করুন Basic Touch Pro
+                `;
+                
+                try {
+                    // SECURE CHANGE: We call the PHP script
+                    await fetch(window.location.href, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            action: 'send_telegram',
+                            chat_id: userId,
+                            text: message
+                        })
+                    });
+                } catch (error) {
+                    console.error('Error sending Telegram message:', error);
+                }
+            }
+            
+            // Save to history
+            function saveToHistory(originalUrl, shortUrl) {
+                let history = JSON.parse(localStorage.getItem('urlHistory') || '[]');
+                
+                // Add new item to beginning of array
+                history.unshift({
+                    originalUrl,
+                    shortUrl,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Keep only the last 10 items
+                if (history.length > HISTORY_LIMIT) {
+                    history = history.slice(0, HISTORY_LIMIT);
+                }
+                
+                localStorage.setItem('urlHistory', JSON.stringify(history));
+                loadHistory();
+            }
+            
+            // Load history
+            function loadHistory() {
+                const history = JSON.parse(localStorage.getItem('urlHistory') || '[]');
+                
+                if (history.length === 0) {
+                    historyList.innerHTML = '<div class="empty-history">No history yet. Shorten your first URL!</div>';
+                    return;
+                }
+                
+                let html = '';
+                history.forEach(item => {
+                    const date = new Date(item.timestamp);
+                    const timeString = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    const dateString = date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+                    
+                    html += `
+                        <div class="history-item">
+                            <div class="history-url">${item.originalUrl}</div>
+                            <a href="${item.shortUrl}" target="_blank" class="history-short">${new URL(item.shortUrl).pathname.slice(1)}</a>
+                            <div class="history-time">${timeString} • ${dateString}</div>
+                        </div>
+                    `;
+                });
+                
+                historyList.innerHTML = html;
+            }
+            
+            // Form submission
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const longUrl = document.getElementById('url').value.trim();
+                
+                if (!longUrl) return;
+                
+                shortenBtn.disabled = true;
+                shortenBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Shortening...';
+                
+                try {
+                    const shortUrl = await shortenUrl(longUrl);
+                    shortUrlInput.value = shortUrl;
+                    resultContainer.style.display = 'block';
+                    
+                    // Save to history
+                    saveToHistory(longUrl, shortUrl);
+                    
+                    // Show Telegram alert
+                    if (window.Telegram && Telegram.WebApp) {
+                        Telegram.WebApp.showAlert('URL short successful');
+                        
+                        // Get user info and send message
+                        const user = Telegram.WebApp.initDataUnsafe.user;
+                        if (user) {
+                            const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+                            await sendTelegramMessage(user.id, fullName, longUrl, shortUrl);
+                        }
+                    }
+                } catch (error) {
+                    alert('Error: Failed to shorten URL. Please check your URL and try again.');
+                } finally {
+                    shortenBtn.disabled = false;
+                    shortenBtn.innerHTML = '<i class="fas fa-compress-alt"></i> Shorten';
+                }
+            });
+            
+            // Copy button
+            copyBtn.addEventListener('click', function() {
+                if (!shortUrlInput.value) return;
+                
+                shortUrlInput.select();
+                document.execCommand('copy');
+                
+                // Show notification
+                notification.classList.add('show');
+                
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            });
+        });
+    </script>
+    
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const AdController = window.Adsgram.init({ blockId: "int-19383" });
+
+        AdController.show().then((result) => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                
+                setTimeout(() => {
+                    window.Telegram.WebApp.showAlert('Thanks for support 💝');
+                }, 200);
+            }
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"0b168fba841b4c6ba25d388460bf2e18","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
