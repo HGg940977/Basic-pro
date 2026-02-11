@@ -1,0 +1,346 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Post Architect Pro - Final</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --tg-bg: #ffffff; --tg-text: #000000; --tg-sec: #707579;
+            --tg-border: #e0e0e0; --tg-blue: #0088cc; --tg-card: #f8f9fa;
+            --tg-bubble: #eff7ff; --tg-green: #28a745;
+        }
+        [data-theme="dark"] {
+            --tg-bg: #17212b; --tg-text: #e1e3e6; --tg-sec: #a8b2bb;
+            --tg-border: #2c3a48; --tg-card: #232f3d; --tg-bubble: #182533;
+        }
+        body { font-family: -apple-system, sans-serif; background: var(--tg-bg); color: var(--tg-text); margin: 0; padding: 0; }
+        
+        .header {
+            padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--tg-border); background: var(--tg-bg); position: sticky; top:0; z-index:100;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo img { width: 32px; height: 32px; border-radius: 8px; }
+        .logo-text { font-weight: bold; font-size: 16px; color: var(--tg-blue); }
+
+        .container { max-width: 500px; margin: 0 auto; padding: 15px; padding-bottom: 100px; }
+        .card { background: var(--tg-card); border-radius: 20px; padding: 20px; border: 1px solid var(--tg-border); margin-bottom: 15px; }
+        label { font-size: 11px; color: var(--tg-sec); font-weight: bold; margin-bottom: 8px; display: block; text-transform: uppercase; }
+
+        .admin-helper { display: flex; gap: 8px; margin-bottom: 15px; }
+        .helper-btn { flex: 1; padding: 12px; border-radius: 12px; background: var(--tg-blue); color: white; text-decoration: none; font-size: 11px; font-weight: bold; text-align: center; }
+
+        .chan-row { display: flex; gap: 8px; }
+        #channelList { flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--tg-border); background: var(--tg-bg); color: inherit; outline: none; }
+        .btn-plus { background: var(--tg-blue); color: white; border: none; width: 45px; border-radius: 12px; cursor: pointer; }
+
+        /* Media Upload Zone Centered */
+        .upload-zone { 
+            width: 100%; aspect-ratio: 16/9; border: 2px dashed var(--tg-border); border-radius: 15px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            cursor: pointer; position: relative; background: var(--tg-bg); text-align: center;
+        }
+        .upload-zone img { width: 100%; height: 100%; object-fit: cover; position: absolute; border-radius: 13px; display: none; z-index: 5; }
+        #file-info { font-size: 11px; color: var(--tg-blue); margin-top: 5px; font-weight: bold; display: none; }
+
+        /* Caption & Bold Tool */
+        .editor-wrap { position: relative; }
+        .bold-tool { position: absolute; top: -35px; right: 0; background: #444; color: white; padding: 5px 12px; border-radius: 8px; font-size: 10px; cursor: pointer; font-weight: bold; }
+        #captionInput { width: 100%; height: 120px; border: 1px solid var(--tg-border); border-radius: 15px; padding: 15px; outline: none; background: #fff; color: #000; font-size: 15px; box-sizing: border-box; resize: none; transition: 0.2s; }
+
+        /* Keyboard Manager */
+        .kb-row-unit { background: var(--tg-bg); border: 1px solid var(--tg-border); border-radius: 15px; padding: 12px; margin-bottom: 12px; }
+        .kb-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .chip { background: var(--tg-blue); color: white; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+
+        /* Professional Preview */
+        .tg-bubble { background: var(--tg-bubble); border-radius: 18px; overflow: hidden; max-width: 85%; border: 1px solid var(--tg-border); }
+        .pv-cap { padding: 12px; font-size: 14.5px; color: var(--tg-text); white-space: pre-wrap; }
+        .pv-kb { padding: 5px; display: flex; flex-direction: column; gap: 5px; }
+        .pv-row { display: flex; gap: 5px; }
+        .pv-item { flex: 1; background: rgba(0,0,0,0.06); padding: 8px; text-align: center; border-radius: 8px; font-size: 13px; color: var(--tg-blue); font-weight: 500; }
+
+        /* Modals */
+        .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-ui { background: var(--tg-bg); width: 100%; max-width: 380px; padding: 25px; border-radius: 25px; }
+        .modal-ui input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--tg-border); margin: 10px 0; background: var(--tg-card); color: var(--tg-text); outline: none; box-sizing: border-box; }
+
+        .btn-p { background: var(--tg-blue); color: #fff; border: none; padding: 15px; width: 100%; border-radius: 15px; font-weight: bold; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        
+        #loader { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+      <div class="logo">
+        <img src="https://i.ibb.co/6c8B0DHm/20250728-114443.png">
+        <div class="logo-text">Basic touch Pro</div>
+      </div>
+      <img id="profile-pic" class="profile" src="" onclick="window.location.href='tg.html'" style="width:35px; height:35px; border-radius:50%; border:2px solid var(--tg-blue); cursor:pointer;">
+    </div>
+
+    <div class="container">
+        <div class="admin-helper">
+            <a href="https://t.me/BasicTouchProBot?startchannel=true" target="_blank" class="helper-btn"><i class="fas fa-plus-circle"></i> ADD TO CHANNEL</a>
+            <a href="https://t.me/BasicTouchProBot?startgroup=true" target="_blank" class="helper-btn"><i class="fas fa-users"></i> ADD TO GROUP</a>
+        </div>
+
+        <div class="card">
+            <label><i class="fas fa-list"></i> Select Chat (Permanent)</label>
+            <div class="chan-row">
+                <select id="channelList"></select>
+                <button class="btn-plus" onclick="openModal('chanModal')"><i class="fas fa-plus"></i></button>
+            </div>
+        </div>
+
+        <div class="card" style="padding:10px">
+            <div class="upload-zone" id="dropZone" onclick="document.getElementById('mediaInput').click()">
+                <div id="up-placeholder">
+                    <i class="fas fa-cloud-arrow-up fa-3x" style="color:var(--tg-blue)"></i>
+                    <p style="font-size:13px; margin-top:10px; font-weight:bold;">Drag & Drop Image/File</p>
+                    <small style="color:var(--tg-sec)">Supports: Images, APK, ZIP, etc.</small>
+                </div>
+                <img id="preview">
+                <div id="file-info"></div>
+                <input type="file" id="mediaInput" style="display:none">
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="editor-wrap">
+                <label><i class="fas fa-pencil"></i> Caption</label>
+                <div class="bold-tool" onclick="wrapBold()"><b>B</b> BOLD</div>
+                <textarea id="captionInput" placeholder="Write post here... <b>bold</b> etc." oninput="syncPreview()"></textarea>
+            </div>
+        </div>
+
+        <div class="card">
+            <label><i class="fas fa-th"></i> Keyboard Layout</label>
+            <div id="kb-area"></div>
+            <button class="btn-p" style="background:#444; font-size:12px; margin-top:10px;" onclick="addBtnRow()"><i class="fas fa-plus"></i> NEW BUTTON LINE</button>
+        </div>
+
+        <label style="margin-left:10px; font-weight:bold; font-size:11px; color:var(--tg-sec);">LIVE SIMULATION</label>
+        <div class="tg-preview-container" style="padding: 10px 0;">
+            <div class="tg-bubble">
+                <img id="pv-img" style="width:100%; display:none;">
+                <div id="pv-caption" class="pv-cap">Post text will appear here...</div>
+                <div id="pv-kb" class="pv-btns"></div>
+            </div>
+        </div>
+
+        <button class="btn-p" id="publishBtn" style="margin-top:25px; background:var(--tg-green);"><i class="fas fa-paper-plane"></i> PUBLISH POST</button>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-bg" id="chanModal">
+        <div class="modal-ui">
+            <h4>Add New Chat</h4>
+            <input type="text" id="chanInput" placeholder="@username or -100...">
+            <a href="https://t.me/BasicTouchPro/2527" target="_blank" style="font-size:11px; color:var(--tg-blue); text-decoration:none;">How to find Chat ID? Watch Video</a>
+            <button class="btn-p" style="margin-top:15px;" onclick="verifyAndAddChat()">VERIFY & SAVE</button>
+            <button class="btn-p" style="background:transparent; color:red; font-size:12px;" onclick="closeModal('chanModal')">CANCEL</button>
+        </div>
+    </div>
+
+    <div class="modal-bg" id="btnModal">
+        <div class="modal-ui">
+            <h4>New Link Button</h4>
+            <input type="text" id="btnLabel" placeholder="Button Name">
+            <input type="text" id="btnUrl" placeholder="https://example.com">
+            <button class="btn-p" onclick="confirmAddBtn()">ADD TO LINE</button>
+        </div>
+    </div>
+
+    <div id="loader"><i class="fas fa-circle-notch fa-spin fa-3x"></i></div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => window.location.href = "index.html");
+
+        const user = tg.initDataUnsafe.user || {};
+        document.getElementById('profile-pic').src = user.username ? `https://t.me/i/userpic/160/${user.username}.jpg` : "";
+        document.documentElement.setAttribute('data-theme', tg.colorScheme);
+
+        // --- Permanent Persistence Fix ---
+        const STORE_KEY = 'bt_permanent_chats_v11';
+        let channels = JSON.parse(localStorage.getItem(STORE_KEY)) || [];
+        let kbData = []; 
+        let activeLineIdx = null;
+        let selectedFile = null;
+
+        window.onload = () => { renderChannels(); };
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        async function verifyAndAddChat() {
+            const val = document.getElementById('chanInput').value;
+            if(!val) return;
+            const res = await fetch(window.location.href, { method: 'POST', body: new URLSearchParams({action: 'verify_chat', chat_id: val}) });
+            const data = await res.json();
+            if(data.ok) {
+                if(!channels.some(c => c.id === data.id)) {
+                    channels.push({ id: data.id, title: data.title });
+                    localStorage.setItem(STORE_KEY, JSON.stringify(channels));
+                }
+                renderChannels();
+                closeModal('chanModal');
+                tg.showAlert(`Saved: ${data.title} ✅`);
+            } else { tg.showAlert(data.error); }
+        }
+
+        function renderChannels() {
+            const select = document.getElementById('channelList');
+            select.innerHTML = channels.map(c => `<option value="${c.id}">${c.title}</option>`).join('');
+        }
+
+        // --- Improved Media Handling (Photos & Documents) ---
+        const mi = document.getElementById('mediaInput');
+        mi.onchange = (e) => { if(e.target.files[0]) { selectedFile = e.target.files[0]; processMedia(selectedFile); } };
+
+        const dz = document.getElementById('dropZone');
+        dz.ondragover = (e) => { e.preventDefault(); dz.classList.add('dragover'); };
+        dz.ondragleave = () => dz.classList.remove('dragover');
+        dz.ondrop = (e) => {
+            e.preventDefault(); dz.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                selectedFile = e.dataTransfer.files[0];
+                processMedia(selectedFile);
+            }
+        };
+
+        function processMedia(file) {
+            const isImage = file.type.startsWith('image/');
+            const infoEl = document.getElementById('file-info');
+            const preview = document.getElementById('preview');
+            const pvImg = document.getElementById('pv-img');
+            const placeholder = document.getElementById('up-placeholder');
+
+            infoEl.style.display = 'block';
+            infoEl.innerText = `Selected: ${file.name}`;
+
+            if (isImage) {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (e) => {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    pvImg.src = e.target.result;
+                    pvImg.style.display = 'block';
+                    placeholder.style.display = 'none';
+                };
+            } else {
+                // Non-image file (APK/ZIP etc)
+                preview.style.display = 'none';
+                pvImg.style.display = 'none';
+                placeholder.style.display = 'block';
+                placeholder.innerHTML = `<i class="fas fa-file-code fa-3x" style="color:var(--tg-blue)"></i><br><p style="font-size:12px; margin-top:10px;">${file.name}</p>`;
+            }
+        }
+
+        function wrapBold() {
+            const area = document.getElementById('captionInput');
+            const s = area.selectionStart;
+            const e = area.selectionEnd;
+            const text = area.value.substring(s, e);
+            if(!text) return;
+            area.setRangeText(`<b>${text}</b>`, s, e, 'select');
+            syncPreview();
+        }
+
+        function addBtnRow() { kbData.push([]); renderKeyboard(); }
+        function openBtnPop(idx) { activeLineIdx = idx; openModal('btnModal'); }
+        function confirmAddBtn() {
+            const l = document.getElementById('btnLabel').value;
+            const u = document.getElementById('btnUrl').value;
+            if(!l || !u) return;
+            kbData[activeLineIdx].push({ text: l, url: u });
+            renderKeyboard();
+            closeModal('btnModal');
+            document.getElementById('btnLabel').value = '';
+            document.getElementById('btnUrl').value = '';
+        }
+        function deleteBtn(r, b) { kbData[r].splice(b, 1); if(kbData[r].length === 0) kbData.splice(r, 1); renderKeyboard(); }
+
+        function renderKeyboard() {
+            const container = document.getElementById('kb-area');
+            const pv = document.getElementById('pv-kb');
+            container.innerHTML = ''; pv.innerHTML = '';
+            kbData.forEach((row, rIdx) => {
+                const rDiv = document.createElement('div'); rDiv.className = 'kb-row-unit';
+                const chips = document.createElement('div'); chips.className = 'kb-chips';
+                const pvRow = document.createElement('div'); pvRow.className = 'pv-row';
+                row.forEach((btn, bIdx) => {
+                    chips.innerHTML += `<div class="chip">${btn.text}<i class="fas fa-times" onclick="deleteBtn(${rIdx}, ${bIdx})"></i></div>`;
+                    pvRow.innerHTML += `<div class="pv-item">${btn.text}</div>`;
+                });
+                rDiv.appendChild(chips);
+                rDiv.innerHTML += `<button class="btn-p" style="padding:6px; font-size:10px; background:#666" onclick="openBtnPop(${rIdx})">+ ADD BUTTON</button>`;
+                container.appendChild(rDiv);
+                pv.appendChild(pvRow);
+            });
+        }
+
+        function syncPreview() {
+            document.getElementById('pv-caption').innerHTML = document.getElementById('captionInput').value || "Post text here...";
+        }
+
+        // --- Publish Function (Fixed Media Post) ---
+        document.getElementById('publishBtn').onclick = async () => {
+            const chat = document.getElementById('channelList').value;
+            if(!chat) { openModal('chanModal'); return; }
+            
+            document.getElementById('loader').style.display = 'flex';
+            const fd = new FormData();
+            fd.append('action', 'publish');
+            fd.append('chat_id', chat);
+            fd.append('caption', document.getElementById('captionInput').value);
+            fd.append('keyboard', JSON.stringify(kbData));
+            
+            // চূড়ান্ত ফাইল হ্যান্ডলিং
+            if(selectedFile) {
+                fd.append('media', selectedFile);
+            }
+
+            try {
+                const res = await fetch(window.location.href, { method: 'POST', body: fd });
+                const data = await res.json();
+                if(data.ok) { 
+                    if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                    tg.showAlert("Success! Published successfully. 🚀", () => location.reload()); 
+                } else { 
+                    tg.showAlert("Failed: " + data.description); 
+                }
+            } catch(e) { tg.showAlert("Connection Error!"); }
+            finally { document.getElementById('loader').style.display = 'none'; }
+        };
+    </script>
+    
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const AdController = window.Adsgram.init({ blockId: "int-19383" });
+
+        AdController.show().then((result) => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                
+                setTimeout(() => {
+                    window.Telegram.WebApp.showAlert('Thanks for support 💝');
+                }, 200);
+            }
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+</script></body>
+</html>
